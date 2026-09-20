@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPlace, formatYears } from "@/components/EntryTable";
 import { getEntry } from "@/lib/queries";
+import { absoluteUrl, jsonLd, site } from "@/lib/site";
 import {
   ENTRY_STATUS_LABELS,
   ENTRY_TYPE_LABELS,
@@ -14,7 +15,34 @@ type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const entry = await getEntry((await params).id);
-  return { title: entry ? `${entry.title} (${entry.year})` : "Record not found" };
+  if (!entry) return { title: "Record not found", robots: { index: false, follow: false } };
+
+  const place = [entry.venue, entry.city, entry.country].filter(Boolean).join(", ");
+  const title = `${entry.title} (${entry.year})`;
+  const description =
+    entry.description ??
+    `${entry.title}, ${entry.year}${place ? ` — ${place}` : ""}. An archive record for ${entry.artist.name}.`;
+  const path = `/entries/${entry.id}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    // Unreviewed records exist at a URL but must never be indexed.
+    robots:
+      entry.status === "published"
+        ? undefined
+        : { index: false, follow: false, nocache: true },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url: absoluteUrl(path),
+      siteName: site.name,
+      images: [{ url: site.ogImage, width: 2500, height: 840, alt: site.name }],
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
 }
 
 export default async function EntryPage({ params }: { params: Params }) {
@@ -24,8 +52,44 @@ export default async function EntryPage({ params }: { params: Params }) {
   const place = formatPlace(entry);
   const status = entry.status as EntryStatus;
 
+  const recordLd = {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: entry.title,
+    url: absoluteUrl(`/entries/${entry.id}`),
+    dateCreated: String(entry.year),
+    ...(entry.description ? { description: entry.description } : {}),
+    ...(entry.url ? { sameAs: entry.url } : {}),
+    creator: {
+      "@type": "Person",
+      name: entry.artist.name,
+      url: absoluteUrl(`/artists/${entry.artist.slug}`),
+    },
+    ...(entry.venue || entry.city
+      ? {
+          locationCreated: {
+            "@type": "Place",
+            name: entry.venue ?? entry.city,
+            ...(entry.city || entry.country
+              ? {
+                  address: {
+                    "@type": "PostalAddress",
+                    ...(entry.city ? { addressLocality: entry.city } : {}),
+                    ...(entry.country ? { addressCountry: entry.country } : {}),
+                  },
+                }
+              : {}),
+          },
+        }
+      : {}),
+    isPartOf: { "@type": "Collection", name: site.name, url: site.url },
+  };
+
   return (
     <article>
+      {status === "published" && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(recordLd) }} />
+      )}
       <Link href="/" className="backlink">
         ← Catalogue
       </Link>

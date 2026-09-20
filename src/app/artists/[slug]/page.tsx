@@ -3,13 +3,34 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPlace, formatYears } from "@/components/EntryTable";
 import { getArtistBySlug } from "@/lib/queries";
+import { absoluteUrl, jsonLd, site } from "@/lib/site";
 import { ENTRY_TYPE_LABELS, type EntryType } from "@/lib/schema";
 
 type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const artist = await getArtistBySlug((await params).slug);
-  return { title: artist ? artist.name : "Artist not found" };
+  if (!artist) return { title: "Artist not found", robots: { index: false, follow: false } };
+
+  const description =
+    artist.bio ??
+    `${artist.name}: ${artist.entries.length} archived exhibitions, publications, awards and residencies.`;
+  const path = `/artists/${artist.slug}`;
+
+  return {
+    title: artist.name,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "profile",
+      title: artist.name,
+      description,
+      url: absoluteUrl(path),
+      siteName: site.name,
+      images: [{ url: site.ogImage, width: 2500, height: 840, alt: site.name }],
+    },
+    twitter: { card: "summary_large_image", title: artist.name, description },
+  };
 }
 
 export default async function ArtistPage({ params }: { params: Params }) {
@@ -24,8 +45,27 @@ export default async function ArtistPage({ params }: { params: Params }) {
     sections.set(entry.type, list);
   }
 
+  const artistLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: artist.name,
+    url: absoluteUrl(`/artists/${artist.slug}`),
+    ...(artist.bio ? { description: artist.bio } : {}),
+    ...(artist.birthYear ? { birthDate: String(artist.birthYear) } : {}),
+    ...(artist.nationality ? { nationality: artist.nationality } : {}),
+    ...(artist.website ? { sameAs: [artist.website] } : {}),
+    jobTitle: "Artist",
+    subjectOf: artist.entries.slice(0, 50).map((entry) => ({
+      "@type": "CreativeWork",
+      name: entry.title,
+      url: absoluteUrl(`/entries/${entry.id}`),
+      dateCreated: String(entry.year),
+    })),
+  };
+
   return (
     <article>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(artistLd) }} />
       <Link href="/" className="backlink">
         ← Catalogue
       </Link>
