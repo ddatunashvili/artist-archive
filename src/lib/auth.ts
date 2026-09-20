@@ -1,39 +1,63 @@
 /**
- * Minimal admin authentication for the prototype.
+ * Admin authentication for the prototype.
  *
- * A single operator account, credentials from the environment, and a
- * stateless HMAC-signed cookie. No dependency, no session store, and it runs
- * unchanged in the edge middleware and in Node route handlers because it only
- * uses Web Crypto.
+ * Two accounts, both configured from the environment:
+ *
+ *   owner — your real credentials. Never published, never pre-filled.
+ *   demo  — the published pair, pre-filled on the sign-in form so the
+ *           prototype can be tested in one click.
+ *
+ * The demo account is on by default only while no owner is configured, so a
+ * fresh clone works immediately but setting a real password does not silently
+ * leave the published one live. Keep it alongside an owner account by setting
+ * DEMO_ADMIN="true" explicitly.
+ *
+ * Sessions are stateless HMAC-signed cookies: no dependency, no session store,
+ * and the same code runs in the edge middleware and in Node route handlers
+ * because it only uses Web Crypto.
  *
  * This is deliberately the smallest thing that keeps /admin closed. It is not
- * a user system: no registration, no roles, no password reset. See
- * docs/ADMIN.md before putting it in front of anything that matters.
+ * a user system. See docs/ADMIN.md before putting it in front of anything
+ * that matters.
  */
 
 export const SESSION_COOKIE = "aeitos_admin";
 export const SESSION_MAX_AGE = 60 * 60 * 12; // 12 hours
 
-/** Demo defaults so a fresh clone can sign in immediately. */
+/** Published in the README. Testing only. */
 const DEMO_EMAIL = "admin@aeitos.com";
 const DEMO_PASSWORD = "aeitos-demo-2026";
-const DEMO_SECRET = "aeitos-prototype-development-secret-change-me";
+const DEV_SECRET = "aeitos-prototype-development-secret-change-me";
 
-export function adminCredentials() {
-  return {
-    email: process.env.ADMIN_EMAIL || DEMO_EMAIL,
-    password: process.env.ADMIN_PASSWORD || DEMO_PASSWORD,
-  };
+function value(name: string): string {
+  const raw = process.env[name];
+  return raw === undefined ? "" : raw.trim();
 }
 
-/** True when the deployment is still running on the published demo values. */
-export function usingDemoCredentials(): boolean {
-  const { email, password } = adminCredentials();
-  return email === DEMO_EMAIL && password === DEMO_PASSWORD;
+/** The private account, or null when none is configured. */
+export function ownerAccount(): { email: string; password: string } | null {
+  const email = value("ADMIN_EMAIL");
+  const password = process.env.ADMIN_PASSWORD ?? "";
+  if (!email || !password) return null;
+  return { email, password };
+}
+
+/**
+ * The published demo account. Enabled by default only when there is no owner;
+ * DEMO_ADMIN="true" keeps it alongside one, DEMO_ADMIN="false" always disables.
+ */
+export function demoAccount(): { enabled: boolean; email: string; password: string } {
+  const flag = value("DEMO_ADMIN").toLowerCase();
+  const enabled = flag === "false" ? false : flag === "true" ? true : ownerAccount() === null;
+  return { enabled, email: DEMO_EMAIL, password: DEMO_PASSWORD };
+}
+
+export function isDemoAccount(email: string): boolean {
+  return email.trim().toLowerCase() === DEMO_EMAIL.toLowerCase();
 }
 
 function sessionSecret(): string {
-  return process.env.ADMIN_SESSION_SECRET || DEMO_SECRET;
+  return value("ADMIN_SESSION_SECRET") || DEV_SECRET;
 }
 
 const encoder = new TextEncoder();
@@ -44,8 +68,8 @@ function toBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function fromBase64Url(value: string): string {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+function fromBase64Url(input: string): string {
+  const padded = input.replace(/-/g, "+").replace(/_/g, "/");
   return atob(padded + "=".repeat((4 - (padded.length % 4)) % 4));
 }
 
@@ -91,10 +115,27 @@ export async function verifySessionToken(token: string | undefined): Promise<str
   }
 }
 
-/** Constant-time credential check. */
-export function checkCredentials(email: string, password: string): boolean {
-  const expected = adminCredentials();
-  const emailOk = safeEqual(email.trim().toLowerCase(), expected.email.toLowerCase());
-  const passwordOk = safeEqual(password, expected.password);
-  return emailOk && passwordOk;
+/**
+ * Checks a sign-in against both accounts.
+ *
+ * Every candidate is compared even after one matches, so the time taken does
+ * not reveal which account an address belongs to. Returns the canonical email
+ * to store in the session, or null.
+ */
+export function checkCredentials(email: string, password: string): string | null {
+  const candidates: { email: string; password: string }[] = [];
+
+  const owner = ownerAccount();
+  if (owner) candidates.push(owner);
+
+  const demo = demoAccount();
+  if (demo.enabled) candidates.push({ email: demo.email, password: demo.password });
+
+  let matched: string | null = null;
+  for (const candidate of candidates) {
+    const emailOk = safeEqual(email.trim().toLowerCase(), candidate.email.toLowerCase());
+    const passwordOk = safeEqual(password, candidate.password);
+    if (emailOk && passwordOk) matched = candidate.email;
+  }
+  return matched;
 }

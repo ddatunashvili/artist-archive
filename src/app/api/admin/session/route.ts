@@ -27,16 +27,17 @@ export async function POST(request: Request) {
   }
 
   const { email, password } = parsed.data;
-  if (!checkCredentials(email, password)) {
+  const matched = checkCredentials(email, password);
+  if (!matched) {
     // One message for both cases, so the response cannot be used to
     // enumerate valid accounts.
     return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
   }
 
-  const response = NextResponse.json({ email });
+  const response = NextResponse.json({ email: matched });
   response.cookies.set({
     name: SESSION_COOKIE,
-    value: await createSessionToken(email),
+    value: await createSessionToken(matched),
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
