@@ -1211,7 +1211,8 @@ blockquote.source {
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(clamp(260px, 26vw, 460px), 1fr));
+  justify-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(240px, 22vw, 400px), auto));
   gap: clamp(14px, 1.4vw, 26px);
   margin: 0 0 clamp(20px, 2vw, 34px);
   padding: 0;
@@ -1222,8 +1223,12 @@ blockquote.source {
   margin: 0;
 }
 
+/* Height-capped rather than width-filled: a single image - especially a
+   generated cover - should not push the record itself below the fold. */
 .gallery img {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  max-height: clamp(260px, 34vh, 440px);
   height: auto;
   display: block;
   border: 1px solid var(--rule);
