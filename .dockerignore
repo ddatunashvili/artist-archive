@@ -9,6 +9,10 @@ node_modules
 # generated in the container from schema.template.prisma
 prisma/schema.prisma
 
+# tesseract language data, fetched at runtime
+*.traineddata
+.ocr-cache
+
 *.db
 Dockerfile
 docker-compose.yml

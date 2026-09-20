@@ -17,6 +17,8 @@
  * `npm install && npm start`.
  */
 
+import { resolve } from "node:path";
+
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 export const ACCEPTED_EXTENSIONS = [".txt", ".md", ".pdf", ".docx", ".png", ".jpg", ".jpeg", ".webp"];
@@ -88,9 +90,13 @@ async function readDocx(buffer: Buffer): Promise<FileText> {
 async function readImage(buffer: Buffer): Promise<FileText> {
   const { createWorker } = await import("tesseract.js");
 
-  // The language data is fetched on first use and cached afterwards, so the
-  // first OCR of a cold deployment is slower than the rest.
-  const worker = await createWorker("eng");
+  // The language data (~15 MB) is fetched on first use and cached afterwards,
+  // so the first OCR of a cold deployment is slower than the rest. It is kept
+  // in a dedicated directory rather than the default, which is the working
+  // directory - that dropped a 15 MB blob next to package.json.
+  const worker = await createWorker("eng", undefined, {
+    cachePath: resolve(process.cwd(), ".ocr-cache"),
+  });
   try {
     const { data } = await worker.recognize(buffer);
     const text = data.text ?? "";

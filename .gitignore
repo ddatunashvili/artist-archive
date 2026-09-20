@@ -44,5 +44,9 @@ coverage/
 # generated from prisma/schema.template.prisma by scripts/set-db-provider.mjs
 prisma/schema.prisma
 
+# tesseract.js language data, downloaded on first OCR
+*.traineddata
+.ocr-cache/
+
 # typescript build info
 *.tsbuildinfo
