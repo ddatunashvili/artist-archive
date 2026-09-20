@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ENTRY_TYPES,
@@ -83,6 +83,10 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
   const [artist, setArtist] = useState<ArtistForm>(EMPTY_ARTIST);
   const [rows, setRows] = useState<Row[]>([]);
   const [extractedBy, setExtractedBy] = useState("manual");
+  const [fileNote, setFileNote] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const [reviewer, setReviewer] = useState("");
   const [reviewNote, setReviewNote] = useState("");
 
@@ -92,6 +96,51 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
     const response = await fetch(file);
     setCv(await response.text());
     setError(null);
+    setFileNote(null);
+  }
+
+  /**
+   * Reads a dropped or chosen file into the textarea.
+   *
+   * The text lands in the box rather than going straight to the model, so the
+   * archivist can see exactly what was read — that matters most for OCR,
+   * where a bad scan is obvious in the text long before it is obvious in the
+   * extracted records.
+   */
+  async function readFile(file: File) {
+    setReading(true);
+    setError(null);
+    setIssues([]);
+    setFileNote(null);
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+
+      const response = await fetch("/api/extract/upload", { method: "POST", body });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(payload.error ?? "That file could not be read.");
+        return;
+      }
+
+      setCv(payload.text);
+      setFileNote(
+        [
+          `Read ${payload.filename} via ${payload.method}`,
+          payload.pages ? `${payload.pages} page${payload.pages === 1 ? "" : "s"}` : null,
+          `${payload.characters.toLocaleString()} characters`,
+        ]
+          .filter(Boolean)
+          .join(" · ") + (payload.warning ? ` — ${payload.warning}` : ""),
+      );
+    } catch {
+      setError("Could not upload that file.");
+    } finally {
+      setReading(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
   }
 
   async function runExtraction() {
@@ -251,6 +300,49 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
             {provider.model ? ` · ${provider.model}` : " · rule-based, no API key needed"}
             {provider.needsKey && " — no API key set, requests will fail. Add one to .env."}
           </div>
+
+          <div
+            className={`dropzone${dragging ? " on" : ""}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              const file = event.dataTransfer.files?.[0];
+              if (file) void readFile(file);
+            }}
+          >
+            <input
+              ref={fileInput}
+              id="cv-file"
+              type="file"
+              accept=".txt,.md,.pdf,.docx,.png,.jpg,.jpeg,.webp"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void readFile(file);
+              }}
+              disabled={reading || busy}
+              hidden
+            />
+            <strong>{reading ? "Reading the file…" : "Drop a CV here"}</strong>
+            <span>
+              PDF, Word, plain text, or a photo or scan read with OCR — or{" "}
+              <button
+                type="button"
+                className="linklike"
+                onClick={() => fileInput.current?.click()}
+                disabled={reading || busy}
+              >
+                choose a file
+              </button>
+              . Nothing is stored; only the text is kept.
+            </span>
+          </div>
+
+          {fileNote && <div className="notice ok">{fileNote}</div>}
 
           <div className="field">
             <label htmlFor="cv">Unstructured CV text</label>

@@ -11,13 +11,18 @@ Rules:
 - "year" is the four-digit start year. For ranges like 2019-2021 also set "endYear".
 - "role" captures how the artist took part: solo, group, curator, author, editor, speaker.
 - "venue" is the institution or gallery, "city" and "country" are separate fields.
+- "title" must never be null. When a line names no work, build one from the
+  kind of record and the institution: "Residency at Villa Medici", "Group
+  exhibition at Palais de Tokyo", "Collaboration with XYZ Foundation".
+- "country" may be filled in from a well-known city ("Rome" implies Italy).
+  Never invent a country you are unsure of; leave it out instead.
 - "sourceText" is the verbatim CV line the record came from.
 - "confidence" is 0 to 1: how sure you are that the record is correct and complete.
 - Reply with JSON only. No prose, no markdown fences.`;
 
 export const RESPONSE_SHAPE = `{
   "artist": {
-    "name": string,
+    "name": string,          // if the CV does not name the artist, use ""
     "birthYear": number | null,
     "nationality": string | null,
     "basedIn": string | null,

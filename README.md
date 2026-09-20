@@ -63,7 +63,7 @@ list and the reasoning behind it.
 | `/admin/entries` | Every record, any status: search, edit, create, delete |
 | `/admin/artists` | Artist CRUD |
 | `/admin/review` | Publish / reject queue |
-| `/admin/import` | Paste CV text → AI extraction → human review → save |
+| `/admin/import` | Upload or paste a CV → AI extraction → human review → save |
 
 JSON API: `GET /api/entries` and `GET /api/entries/[id]` are public. Everything that writes —
 `POST /api/extract`, `POST /api/entries`, all of `/api/admin/*` — needs an admin session.
@@ -148,6 +148,28 @@ installs on a host that only runs `npm install`.
 See [`docs/ADMIN.md`](docs/ADMIN.md) for what the panel does and exactly what the lock protects.
 
 ---
+
+## Reading a CV file
+
+Artists send CVs as PDFs, Word files, or a photograph of a printed page. `/admin/import` takes any
+of them by drag-and-drop:
+
+| Input | Reader |
+| --- | --- |
+| `.txt`, `.md` | read directly |
+| `.pdf` | `unpdf` (pdf.js) text layer |
+| `.docx` | `mammoth` |
+| `.png`, `.jpg`, `.webp` | `tesseract.js` OCR |
+
+Every reader is pure JavaScript or WASM — a native module would need a compiler on the host, and
+the deployment only runs `npm install && npm start`.
+
+The file is never written to disk. Its text lands in the textarea first, so you can see exactly what
+was read before a model is asked to interpret it — which matters most with OCR, where a bad scan is
+obvious in the text long before it is obvious in the records.
+
+A scanned PDF has no text layer and rendering its pages would need a native canvas, so the app says
+so and asks for a page as an image instead, rather than half-working.
 
 ## SEO
 

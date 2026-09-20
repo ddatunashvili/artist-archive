@@ -1,5 +1,6 @@
 import { ExtractionResultSchema, fieldErrors } from "@/lib/schema";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
+import { repairExtraction } from "./repair";
 import { ExtractorError, type ExtractInput, type Extractor } from "./types";
 
 /**
@@ -15,6 +16,16 @@ export interface CompatibleConfig {
   extraHeaders?: Record<string, string>;
   /** Some gateways reject response_format; set false to fall back to prompting. */
   jsonMode?: boolean;
+  /**
+   * Ceiling on the reply.
+   *
+   * Not optional in practice: OpenRouter reserves the model full output
+   * window when this is absent, so a request is priced at the maximum the
+   * model could ever produce. An account with a small balance is then
+   * refused with 402 even though the actual reply would cost a fraction of
+   * it. Sending an explicit ceiling prices the request honestly.
+   */
+  maxTokens: number;
 }
 
 const TIMEOUT_MS = 90_000;
@@ -60,6 +71,7 @@ export function createCompatibleExtractor(config: CompatibleConfig): Extractor {
           body: JSON.stringify({
             model: config.model,
             temperature: 0,
+            max_tokens: config.maxTokens,
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: buildUserPrompt(text, artistName) },
@@ -85,7 +97,9 @@ export function createCompatibleExtractor(config: CompatibleConfig): Extractor {
             ? "Check the API key in your .env file."
             : status === 429
               ? "Rate limited by the provider."
-              : "";
+              : status === 402
+                ? `Not enough credit for a reply of up to ${config.maxTokens} tokens. Add credit, or lower ${config.name === "openrouter" ? "OPENROUTER_MAX_TOKENS" : "OPENAI_MAX_TOKENS"}.`
+                : "";
         throw new ExtractorError(`${config.name} returned HTTP ${status}. ${hint}`.trim(), 502);
       }
 
@@ -104,7 +118,8 @@ export function createCompatibleExtractor(config: CompatibleConfig): Extractor {
         throw new ExtractorError("Model reply was not valid JSON.");
       }
 
-      const result = ExtractionResultSchema.safeParse(parsed);
+      // Fill the fields a model honestly returns as null before validating.
+      const result = ExtractionResultSchema.safeParse(repairExtraction(parsed, artistName));
       if (!result.success) {
         throw new ExtractorError(
           "Model reply did not match the archive schema.",

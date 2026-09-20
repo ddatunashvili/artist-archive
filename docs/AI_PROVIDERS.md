@@ -43,9 +43,26 @@ It exists so that:
 ## `openai` and `openrouter`
 
 Both speak the OpenAI Chat Completions API, so they share `openai-compatible.ts` and differ only in
-base URL, model id and headers. Requests use `temperature: 0` and, where supported,
-`response_format: { type: "json_object" }`; replies are fence-stripped before parsing because not
-every routed model honours JSON mode.
+base URL, model id and headers. Requests use `temperature: 0`, an explicit `max_tokens`, and where
+supported `response_format: { type: "json_object" }`; replies are fence-stripped before parsing
+because not every routed model honours JSON mode.
+
+### Why `max_tokens` is not optional
+
+OpenRouter prices a request against the **maximum** the model could return. Omit `max_tokens` and it
+reserves the model's entire output window — 16,384 tokens for `gpt-4o-mini` — so an account without
+that much credit is refused outright:
+
+```
+402  This request requires more credits, or fewer max_tokens.
+     You requested up to 16384 tokens, but can only afford 1540.
+```
+
+That reads like "no credit" and is not: the actual reply costs a fraction of the reservation.
+`OPENROUTER_MAX_TOKENS` (default 4000) sets the ceiling, and a 402 now says exactly which variable
+to lower.
+
+Set it high enough for the longest CV you expect — roughly 40 tokens of JSON per record.
 
 ```dotenv
 AI_PROVIDER="openai"
@@ -66,6 +83,18 @@ curl http://localhost:3000/api/extract
 # {"provider":"openai","model":"gpt-4o-mini","needsKey":false}
 ```
 
+## Repairing honest nulls
+
+A model told to return strict JSON still answers truthfully when a field is not in the source. For
+`2019 — Residency at Villa Medici, Rome` there is no work title, so it returns `title: null`; a CV
+with no name at the top returns `artist.name: null`. Both readings are correct, and both would fail
+a schema that requires strings.
+
+`src/lib/ai/repair.ts` fills exactly those two cases before validation — deriving
+"Residency at Villa Medici" from the type and institution, the same way the rule-based parser does —
+and drops a record that still has no title. Everything else stays strict: a hallucinated field or a
+malformed year is still rejected with its path.
+
 ## Failure handling
 
 `ExtractorError` carries an HTTP status that the route passes through:
@@ -78,6 +107,7 @@ curl http://localhost:3000/api/extract
 | 429 | 502 | "Rate limited by the provider" |
 | Reply is not JSON | 502 | "Model reply was not valid JSON" |
 | Reply does not match the schema | 422 | the failing field paths |
+| Not enough credit for `max_tokens` | 502 | "Add credit, or lower OPENROUTER_MAX_TOKENS" |
 
 Provider response bodies are never echoed back to the browser — they can contain the prompt, and
 the prompt contains the CV.

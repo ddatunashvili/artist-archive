@@ -8,12 +8,13 @@ import type { Extractor } from "./types";
  * so the prompt also demands JSON and the reply is fence-stripped.
  */
 export function createOpenRouterExtractor(): Extractor {
-  const { apiKey, model, baseUrl, siteUrl, appName } = env.openrouter;
+  const { apiKey, model, baseUrl, siteUrl, appName, maxTokens } = env.openrouter;
   return createCompatibleExtractor({
     name: "openrouter",
     apiKey,
     model,
     baseUrl,
+    maxTokens,
     extraHeaders: {
       "HTTP-Referer": siteUrl,
       "X-Title": appName,

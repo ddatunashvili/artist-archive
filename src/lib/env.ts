@@ -32,6 +32,7 @@ export const env = {
       apiKey: str("OPENAI_API_KEY"),
       model: str("OPENAI_MODEL", "gpt-4o-mini"),
       baseUrl: str("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+      maxTokens: int("OPENAI_MAX_TOKENS", 4000),
     };
   },
   get openrouter() {
@@ -39,6 +40,7 @@ export const env = {
       apiKey: str("OPENROUTER_API_KEY"),
       model: str("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
       baseUrl: str("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+      maxTokens: int("OPENROUTER_MAX_TOKENS", 4000),
       siteUrl: str("OPENROUTER_SITE_URL", "http://localhost:3000"),
       appName: str("OPENROUTER_APP_NAME", "Artist Archive"),
     };

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { MainNav } from "@/components/MainNav";
+import { registrationOpen } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { absoluteUrl, jsonLd, site } from "@/lib/site";
 import "./globals.css";
 
@@ -72,7 +75,11 @@ const websiteLd = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Read once here rather than in every page: the masthead needs to know who
+  // is signed in, and the cookie is httpOnly so the browser cannot tell.
+  const session = await getSession();
+
   return (
     <html lang="en">
       <body>
@@ -99,12 +106,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
                 <div className="strapline">archive — {site.tagline.toLowerCase()}</div>
               </div>
-              <nav>
-                <Link href="/">Catalogue</Link>
-                <Link href="/artists">Artists</Link>
-                <Link href="/about">About</Link>
-                <Link href="/admin">Admin</Link>
-              </nav>
+              <MainNav
+                session={
+                  session
+                    ? { email: session.email, role: session.role, name: session.name }
+                    : null
+                }
+                canRegister={registrationOpen()}
+              />
             </div>
           </div>
         </header>
@@ -113,6 +122,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <footer className="site-footer shell">
           <span>© {new Date().getFullYear()} aeitos, all rights reserved</span>
+
+          <nav className="footer-nav" aria-label="Footer">
+            <Link href="/">Catalogue</Link>
+            <Link href="/artists">Artists</Link>
+            <Link href="/about">About</Link>
+            {session ? (
+              <Link href="/admin">Admin</Link>
+            ) : (
+              <>
+                <Link href="/admin/login">Sign in</Link>
+                {registrationOpen() && <Link href="/admin/register">Create account</Link>}
+              </>
+            )}
+          </nav>
+
           <span>Records are published only after human review</span>
         </footer>
       </body>
