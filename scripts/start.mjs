@@ -9,9 +9,12 @@
  *    SERVER_PORT; most other hosts use PORT. Hardcoding 3000 would make the
  *    app unreachable from outside the container.
  *
- * 2. Builds if there is no build. `.next/` is git-ignored, so a freshly
- *    fetched repository has none and `next start` would exit with
- *    "Could not find a production build in the '.next' directory".
+ * 2. Builds when there is no build, and rebuilds when the sources that
+ *    produced the existing one have changed. `.next/` is git-ignored, so a
+ *    freshly fetched repository has none and `next start` would exit with
+ *    "Could not find a production build in the '.next' directory" - and a panel
+ *    that deploys by fetching over the same folder keeps the previous build,
+ *    so a push would otherwise go live still serving the old bundle.
  *
  *    The build also runs `prebuild` (which writes prisma/schema.prisma from
  *    the template) and `prisma generate`. That ordering matters: the
@@ -22,9 +25,10 @@
  * 3. Fails with a readable message when DATABASE_URL is missing, instead of
  *    letting Prisma throw on the first query.
  */
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -104,11 +108,79 @@ run("db:generate");
 
 /* 4. Build --------------------------------------------------------------- */
 
-if (existsSync(resolve(root, ".next/BUILD_ID"))) {
-  console.log("> production build present");
+/**
+ * A build is reused only while the sources that produced it are unchanged.
+ *
+ * Checking merely that `.next/` exists is not enough: a panel that deploys by
+ * fetching the repository over the same folder leaves the previous build in
+ * place, so a push would go live still serving the old bundle.
+ *
+ * The fingerprint is content-based rather than mtime-based, because that same
+ * fetch rewrites every tracked file on each start and would otherwise force a
+ * rebuild every boot.
+ */
+const SOURCE_PATHS = [
+  "src",
+  "public",
+  "prisma/schema.template.prisma",
+  "prisma/seed.ts",
+  "package.json",
+  "package-lock.json",
+  "next.config.ts",
+  "tsconfig.json",
+];
+
+const SKIP_DIRS = new Set(["node_modules", ".next", ".git"]);
+
+function hashInto(hash, path) {
+  let stats;
+  try {
+    stats = statSync(path);
+  } catch {
+    return; // optional file
+  }
+
+  if (stats.isDirectory()) {
+    for (const name of readdirSync(path).sort()) {
+      if (SKIP_DIRS.has(name)) continue;
+      hashInto(hash, join(path, name));
+    }
+    return;
+  }
+
+  hash.update(relative(root, path).replace(/\\/g, "/"));
+  hash.update(readFileSync(path));
+}
+
+function sourceFingerprint() {
+  const hash = createHash("sha256");
+  for (const entry of SOURCE_PATHS) hashInto(hash, resolve(root, entry));
+  return hash.digest("hex");
+}
+
+const stampPath = resolve(root, ".next/BUILD_SOURCE");
+const fingerprint = sourceFingerprint();
+
+let previous = null;
+try {
+  previous = readFileSync(stampPath, "utf8").trim();
+} catch {
+  // never built by this script
+}
+
+const hasBuild = existsSync(resolve(root, ".next/BUILD_ID"));
+
+if (hasBuild && previous === fingerprint && process.env.FORCE_BUILD !== "true") {
+  console.log("> production build is current");
 } else {
-  console.log("> no production build found, building once before start");
+  if (!hasBuild) console.log("> no production build found, building");
+  else if (previous === null) console.log("> build has no fingerprint, rebuilding");
+  else if (previous !== fingerprint) console.log("> sources changed since the build, rebuilding");
+  else console.log("> FORCE_BUILD set, rebuilding");
+
   run("build");
+  // Written after a successful build, so a failed one is never marked current.
+  writeFileSync(stampPath, `${fingerprint}\n`);
 }
 
 /* 5. Serve --------------------------------------------------------------- */

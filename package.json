@@ -22,7 +22,7 @@
     "start:prod": "node --env-file=.env.prod scripts/start.mjs",
     "db:deploy": "node scripts/set-db-provider.mjs && prisma generate && prisma migrate deploy",
     "postinstall": "node scripts/set-db-provider.mjs",
-    "predev": "node scripts/set-db-provider.mjs",
+    "predev": "node scripts/set-db-provider.mjs && prisma generate",
     "prebuild": "node scripts/set-db-provider.mjs",
     "start:next": "next start"
   },
