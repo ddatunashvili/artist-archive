@@ -25,6 +25,9 @@
      individual prose blocks cap their own measure instead. */
   --max: none;
   --gutter: clamp(20px, 3.6vw, 76px);
+  /* Space under the masthead. Auth pages cancel it so their divide starts
+     directly below the rule. */
+  --header-gap: clamp(32px, 4vw, 72px);
 
   /* fluid type scale */
   --t-body: clamp(16px, 0.34vw + 15px, 19px);
@@ -129,7 +132,7 @@ table {
 .site-header {
   border-bottom: 1px solid var(--ink);
   padding: clamp(20px, 2.4vw, 40px) 0 clamp(14px, 1.4vw, 24px);
-  margin-bottom: clamp(32px, 4vw, 72px);
+  margin-bottom: var(--header-gap);
 }
 
 .site-header .row {
@@ -1241,4 +1244,130 @@ blockquote.source {
   letter-spacing: 0.1em;
   color: var(--muted);
   margin-top: 8px;
+}
+
+/* ---------- auth pages ---------- */
+
+/* Full-bleed split: the brand holds the left, the form the right. The page
+   breaks out of the normal shell padding so the divide runs edge to edge. */
+.auth {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: calc(100vh - 210px);
+  margin: calc(var(--header-gap) * -1) calc(var(--gutter) * -1) 0;
+}
+
+.auth-brand {
+  border-right: 1px solid var(--ink);
+  padding: clamp(32px, 4vw, 76px) clamp(24px, 3.4vw, 76px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  background: var(--paper-2);
+}
+
+.auth-brand h2 {
+  border: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.auth-brand .claim {
+  font-size: clamp(26px, 2.6vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+  margin: 0;
+}
+
+.auth-brand .note {
+  color: var(--muted);
+  max-width: 46ch;
+  font-size: var(--t-meta);
+  margin: 18px 0 0;
+}
+
+.auth-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  max-width: 44ch;
+}
+
+.auth-points li {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  font-size: var(--t-meta);
+  color: var(--ink-soft);
+}
+
+.auth-points .n {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.auth-form {
+  padding: clamp(32px, 4vw, 76px) clamp(24px, 3.4vw, 76px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-form-inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-form h1 {
+  margin-bottom: 8px;
+}
+
+.auth-alt {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: clamp(22px, 2.4vw, 34px);
+  border-top: 1px solid var(--rule);
+  padding-top: clamp(16px, 1.6vw, 24px);
+}
+
+.auth-form .field {
+  margin-bottom: 16px;
+}
+
+.auth-form input {
+  width: 100%;
+}
+
+.hint {
+  font-size: var(--t-label);
+  color: var(--muted);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .auth-brand {
+    border-right: none;
+    border-bottom: 1px solid var(--ink);
+    gap: 28px;
+  }
+
+  .auth-form {
+    padding-top: clamp(28px, 4vw, 48px);
+  }
 }

@@ -119,20 +119,31 @@ Set `SEED_ON_START=false` in `.env` to skip seeding entirely.
 
 ## Admin panel
 
+Anyone can try it. Two ways in at `/admin`:
+
 ```
-/admin
-admin@aeitos.com
+demo@aeitos.com
 aeitos-demo-2026
 ```
 
-The sign-in form **pre-fills the demo account**, so the prototype can be tested in one click.
+The sign-in form **pre-fills that account**, so it is one click. Or
+[register](https://archive.renode.space/admin/register) for your own — sign-up is open.
 
 Dashboard with analytics, full CRUD over records and artists, the review queue and CV import all
 live here. The public site is read-only.
 
-> The prefill is not hardcoded — it appears only while the configured credentials still match the
-> published demo pair. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` and the prefill, the hint
-> box and the "demo account" badge disappear together.
+### Roles
+
+| Role | Can |
+| --- | --- |
+| `editor` — the demo account and every registration | Import, review, publish, create and edit records and artists |
+| `admin` — the `ADMIN_EMAIL` account | All of the above, plus deleting an artist with its records, and managing accounts |
+
+Keeping sign-up at `editor` is what makes open registration safe: a visitor can exercise the whole
+workflow without being able to empty a shared archive.
+
+Passwords are stored as PBKDF2-SHA256 with a per-user salt — no native dependency, so the app still
+installs on a host that only runs `npm install`.
 
 See [`docs/ADMIN.md`](docs/ADMIN.md) for what the panel does and exactly what the lock protects.
 
@@ -225,6 +236,8 @@ Details, including the MySQL column types the script manages, are in
   Nothing is hardcoded in the source or in `docker-compose.yml`.
 - **If a key or password has ever been pasted into a chat, an issue or a prompt, rotate it.** Treat
   it as public from that moment, whatever was done with it afterwards.
+- **Registration is open on purpose**, so the prototype can be tried. New accounts are `editor` and
+  cannot delete an artist or manage accounts. Set `ALLOW_REGISTRATION="false"` to close it.
 - **Never paste a real password into an AI prompt or a chat window.** Put it in your local `.env`
   file. The app reads keys from `process.env` on the server only.
 - API keys are never sent to the browser. `/api/extract` reports the provider name and model, never
@@ -233,9 +246,10 @@ Details, including the MySQL column types the script manages, are in
 - CV input is length-capped (`MAX_CV_CHARS`) and every payload is re-validated server-side, so a
   tampered request cannot write fields the schema does not allow.
 
-The admin panel is protected by a single shared account with **published demo credentials**. That
-is fine for a prototype on a review URL and wrong for anything else: change them before the domain
-is shared, and read the limits in [`docs/ADMIN.md`](docs/ADMIN.md).
+The admin panel has a **published demo account** and **open registration**, both deliberate so the
+prototype can be tried. That is right for a review URL and wrong for real material: set
+`ALLOW_REGISTRATION="false"` and `DEMO_ADMIN="false"`, and read the limits in
+[`docs/ADMIN.md`](docs/ADMIN.md).
 
 ---
 
@@ -307,7 +321,7 @@ public/
 
 This is a prototype, deliberately small:
 
-- One shared admin account, no individual users or roles.
+- Two roles only, and no password reset or email verification.
 - Free-text search uses `contains`, which is case-sensitive on SQLite.
 - No pagination — the catalogue caps at 500 records per view.
 - No image or document storage; records are textual.

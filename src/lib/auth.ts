@@ -1,31 +1,38 @@
 /**
- * Admin authentication for the prototype.
+ * Sessions and the environment-configured accounts.
  *
- * Two accounts, both configured from the environment:
+ * Deliberately free of any database import: this module runs in the edge
+ * middleware as well as in Node route handlers, so it only uses Web Crypto.
+ * Database-backed accounts live in src/lib/users.ts.
  *
- *   owner — your real credentials. Never published, never pre-filled.
- *   demo  — the published pair, pre-filled on the sign-in form so the
- *           prototype can be tested in one click.
+ * Three ways in:
  *
- * The demo account is on by default only while no owner is configured, so a
- * fresh clone works immediately but setting a real password does not silently
- * leave the published one live. Keep it alongside an owner account by setting
- * DEMO_ADMIN="true" explicitly.
+ *   owner     ADMIN_EMAIL / ADMIN_PASSWORD. Private, never pre-filled. Role
+ *             "admin", so the archive can always be administered even if the
+ *             user table is empty or unreachable.
+ *   demo      A published pair, pre-filled on the sign-in form so anyone can
+ *             try the prototype. Role "editor".
+ *   registered  Anyone who signs up. Role "editor".
  *
- * Sessions are stateless HMAC-signed cookies: no dependency, no session store,
- * and the same code runs in the edge middleware and in Node route handlers
- * because it only uses Web Crypto.
- *
- * This is deliberately the smallest thing that keeps /admin closed. It is not
- * a user system. See docs/ADMIN.md before putting it in front of anything
- * that matters.
+ * "editor" can import, review, publish and edit. Destructive and
+ * administrative actions — deleting an artist and its records, managing
+ * users — require "admin", so an open demo cannot be wiped by a visitor.
  */
 
 export const SESSION_COOKIE = "aeitos_admin";
 export const SESSION_MAX_AGE = 60 * 60 * 12; // 12 hours
 
+export const ROLES = ["admin", "editor"] as const;
+export type Role = (typeof ROLES)[number];
+
+export type Session = {
+  email: string;
+  role: Role;
+  name?: string;
+};
+
 /** Published in the README. Testing only. */
-const DEMO_EMAIL = "admin@aeitos.com";
+const DEMO_EMAIL = "demo@aeitos.com";
 const DEMO_PASSWORD = "aeitos-demo-2026";
 const DEV_SECRET = "aeitos-prototype-development-secret-change-me";
 
@@ -43,17 +50,37 @@ export function ownerAccount(): { email: string; password: string } | null {
 }
 
 /**
- * The published demo account. Enabled by default only when there is no owner;
- * DEMO_ADMIN="true" keeps it alongside one, DEMO_ADMIN="false" always disables.
+ * The published demo account. On by default unless DEMO_ADMIN="false", so the
+ * prototype is testable by anyone who opens it.
  */
 export function demoAccount(): { enabled: boolean; email: string; password: string } {
-  const flag = value("DEMO_ADMIN").toLowerCase();
-  const enabled = flag === "false" ? false : flag === "true" ? true : ownerAccount() === null;
-  return { enabled, email: DEMO_EMAIL, password: DEMO_PASSWORD };
+  return {
+    enabled: value("DEMO_ADMIN").toLowerCase() !== "false",
+    email: DEMO_EMAIL,
+    password: DEMO_PASSWORD,
+  };
+}
+
+/** Cookie options shared by sign-in and registration. */
+export function sessionCookie(token: string) {
+  return {
+    name: SESSION_COOKIE,
+    value: token,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  };
 }
 
 export function isDemoAccount(email: string): boolean {
   return email.trim().toLowerCase() === DEMO_EMAIL.toLowerCase();
+}
+
+/** Registration can be closed without redeploying. */
+export function registrationOpen(): boolean {
+  return value("ALLOW_REGISTRATION").toLowerCase() !== "false";
 }
 
 function sessionSecret(): string {
@@ -86,56 +113,72 @@ async function sign(payload: string): Promise<string> {
 }
 
 /** Length-independent comparison, so a wrong guess leaks no timing signal. */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
 
-export async function createSessionToken(email: string): Promise<string> {
+export async function createSessionToken(session: Session): Promise<string> {
   const payload = toBase64Url(
-    encoder.encode(JSON.stringify({ sub: email, exp: Date.now() + SESSION_MAX_AGE * 1000 })),
+    encoder.encode(
+      JSON.stringify({
+        sub: session.email,
+        role: session.role,
+        name: session.name,
+        exp: Date.now() + SESSION_MAX_AGE * 1000,
+      }),
+    ),
   );
   return `${payload}.${await sign(payload)}`;
 }
 
-export async function verifySessionToken(token: string | undefined): Promise<string | null> {
+/** The role travels inside the signed cookie, so no lookup is needed at the edge. */
+export async function verifySessionToken(token: string | undefined): Promise<Session | null> {
   if (!token) return null;
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
   if (!safeEqual(signature, await sign(payload))) return null;
 
   try {
-    const claims = JSON.parse(fromBase64Url(payload)) as { sub?: string; exp?: number };
+    const claims = JSON.parse(fromBase64Url(payload)) as {
+      sub?: string;
+      role?: string;
+      name?: string;
+      exp?: number;
+    };
     if (!claims.sub || !claims.exp || claims.exp < Date.now()) return null;
-    return claims.sub;
+    const role: Role = claims.role === "admin" ? "admin" : "editor";
+    return { email: claims.sub, role, name: claims.name };
   } catch {
     return null;
   }
 }
 
 /**
- * Checks a sign-in against both accounts.
+ * Checks the environment accounts only. Registered users are checked in
+ * src/lib/users.ts; the session route tries both.
  *
  * Every candidate is compared even after one matches, so the time taken does
- * not reveal which account an address belongs to. Returns the canonical email
- * to store in the session, or null.
+ * not reveal which account an address belongs to.
  */
-export function checkCredentials(email: string, password: string): string | null {
-  const candidates: { email: string; password: string }[] = [];
+export function checkEnvCredentials(email: string, password: string): Session | null {
+  const candidates: { email: string; password: string; role: Role }[] = [];
 
   const owner = ownerAccount();
-  if (owner) candidates.push(owner);
+  if (owner) candidates.push({ ...owner, role: "admin" });
 
   const demo = demoAccount();
-  if (demo.enabled) candidates.push({ email: demo.email, password: demo.password });
+  if (demo.enabled) candidates.push({ email: demo.email, password: demo.password, role: "editor" });
 
-  let matched: string | null = null;
+  let matched: Session | null = null;
   for (const candidate of candidates) {
     const emailOk = safeEqual(email.trim().toLowerCase(), candidate.email.toLowerCase());
     const passwordOk = safeEqual(password, candidate.password);
-    if (emailOk && passwordOk) matched = candidate.email;
+    if (emailOk && passwordOk) {
+      matched = { email: candidate.email, role: candidate.role, name: undefined };
+    }
   }
   return matched;
 }

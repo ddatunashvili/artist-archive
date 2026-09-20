@@ -46,6 +46,9 @@ const MYSQL_NATIVE_TYPES = {
   "EntryImage.url": "@db.VarChar(600)",
   "EntryImage.alt": "@db.VarChar(300)",
   "EntryImage.credit": "@db.VarChar(200)",
+  "User.email": "@db.VarChar(200)",
+  "User.name": "@db.VarChar(120)",
+  "User.passwordHash": "@db.VarChar(255)",
 };
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");

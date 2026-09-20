@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 /**
  * Archivist shortcuts on the public catalogue.
@@ -12,20 +11,22 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
  * page keeps doing its one job.
  */
 export async function QuickActions({ pending }: { pending: number }) {
-  const email = await verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
+  const session = await getSession();
 
-  if (!email) {
+  if (!session) {
     return (
       <p className="signin-hint">
-        Archivist? <Link href="/admin/login">Sign in</Link> to import a CV, review records or manage
-        the archive.
+        Archivist? <Link href="/admin/login">Sign in</Link> or{" "}
+        <Link href="/admin/register">create an account</Link> to import a CV and review records.
       </p>
     );
   }
 
   return (
     <div className="quick-actions">
-      <span className="who">Signed in — {email}</span>
+      <span className="who">
+        Signed in — {session.name ?? session.email} ({session.role})
+      </span>
       <Link href="/admin/import" className="button">
         Import a CV
       </Link>

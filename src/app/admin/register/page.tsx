@@ -1,39 +1,31 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthPanel } from "@/components/AuthPanel";
-import { LoginForm } from "@/components/LoginForm";
-import { demoAccount, registrationOpen } from "@/lib/auth";
+import { RegisterForm } from "@/components/RegisterForm";
+import { registrationOpen } from "@/lib/auth";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { getSession, safeNext } from "@/lib/session";
 
 export const metadata: Metadata = {
-  title: "Sign in",
+  title: "Create an account",
   robots: { index: false, follow: false },
 };
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function LoginPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function RegisterPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const next = safeNext(Array.isArray(params.next) ? params.next[0] : params.next);
 
-  // Already signed in: no reason to show the form again.
   if (await getSession()) redirect(next);
-
-  // Only the demo pair is ever pre-filled; owner credentials never are.
-  const demo = demoAccount();
+  if (!registrationOpen()) redirect("/admin/login");
 
   return (
     <div className="auth">
       <AuthPanel />
       <section className="auth-form">
-        <LoginForm
-          demo={demo.enabled}
-          demoEmail={demo.enabled ? demo.email : ""}
-          demoPassword={demo.enabled ? demo.password : ""}
-          canRegister={registrationOpen()}
-          next={next}
-        />
+        <RegisterForm minPasswordLength={MIN_PASSWORD_LENGTH} next={next} />
       </section>
     </div>
   );

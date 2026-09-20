@@ -1,23 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /**
- * Prototype sign-in. When the deployment is still on the demo account the
- * fields arrive pre-filled, so a reviewer can reach the admin panel in one
- * click. `demo` is false as soon as real credentials are configured, and the
- * hint disappears with it.
+ * Sign-in.
+ *
+ * When the published demo account is enabled the fields arrive pre-filled, so
+ * a reviewer reaches the archive in one click. The prefill is driven by the
+ * server: configure real credentials and it disappears on its own.
  */
 export function LoginForm({
   demo,
   demoEmail,
   demoPassword,
+  canRegister,
   next,
 }: {
   demo: boolean;
   demoEmail: string;
   demoPassword: string;
+  canRegister: boolean;
   next: string;
 }) {
   const router = useRouter();
@@ -51,10 +55,13 @@ export function LoginForm({
   }
 
   return (
-    <form onSubmit={submit}>
+    <div className="auth-form-inner">
+      <h1>Sign in</h1>
+      <p className="lede">Continue to the archivist tools.</p>
+
       {demo && (
         <div className="demo-creds">
-          Demo account, pre-filled
+          Demo account, pre-filled — press sign in
           <br />
           {demoEmail}
           <br />
@@ -68,33 +75,42 @@ export function LoginForm({
         </div>
       )}
 
-      <div className="field">
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="username"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-      </div>
+      <form onSubmit={submit}>
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </div>
 
-      <div className="field">
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-      </div>
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+        </div>
 
-      <button type="submit" disabled={busy} style={{ width: "100%" }}>
-        {busy ? "Signing in…" : "Sign in"}
-      </button>
-    </form>
+        <button type="submit" disabled={busy} style={{ width: "100%" }}>
+          {busy ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+
+      {canRegister && (
+        <p className="auth-alt">
+          No account? <Link href="/admin/register">Create one</Link> — it takes a moment and you can
+          use the archive straight away.
+        </p>
+      )}
+    </div>
   );
 }

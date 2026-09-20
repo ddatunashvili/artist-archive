@@ -16,17 +16,21 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // Without these there would be no way to sign in.
-  if (pathname === "/admin/login" || pathname === "/api/admin/session") {
-    return NextResponse.next();
-  }
+  const openPaths = [
+    "/admin/login",
+    "/admin/register",
+    "/api/admin/session",
+    "/api/admin/register",
+  ];
+  if (openPaths.includes(pathname)) return NextResponse.next();
 
   const isPublicRead =
     SAFE_METHODS.has(request.method) &&
     PUBLIC_READ_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (isPublicRead) return NextResponse.next();
 
-  const email = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
-  if (email) return NextResponse.next();
+  const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
+  if (session) return NextResponse.next();
 
   // A redirect would look like success to fetch(), so APIs get a status.
   if (pathname.startsWith("/api/")) {

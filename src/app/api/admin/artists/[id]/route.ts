@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { AdminArtistPatchSchema, fieldErrors } from "@/lib/schema";
+import { getSession } from "@/lib/session";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -46,6 +47,16 @@ export async function PATCH(request: Request, { params }: Context) {
  * and the UI can confirm before calling this.
  */
 export async function DELETE(_request: Request, { params }: Context) {
+  // Deleting an artist cascades to every one of their records, so it is kept
+  // away from the open demo and from registered editors.
+  const session = await getSession();
+  if (session?.role !== "admin") {
+    return NextResponse.json(
+      { error: "Only an admin can delete an artist and its records." },
+      { status: 403 },
+    );
+  }
+
   const { id } = await params;
   const existing = await prisma.artist.findUnique({
     where: { id },

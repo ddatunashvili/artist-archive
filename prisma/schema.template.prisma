@@ -105,3 +105,22 @@ model EntryImage {
 
   @@index([entryId])
 }
+
+/// A registered archivist.
+///
+/// Passwords are stored only as a PBKDF2-SHA256 hash with a per-user salt
+/// (see src/lib/password.ts). The environment-configured owner and demo
+/// accounts still work alongside this table, so a misconfigured database can
+/// never lock everyone out of the archive.
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  /// admin | editor
+  role         String    @default("editor")
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+
+  @@index([role])
+}
