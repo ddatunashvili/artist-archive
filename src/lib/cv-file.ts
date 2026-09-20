@@ -25,8 +25,11 @@ export const ACCEPTED_EXTENSIONS = [".txt", ".md", ".pdf", ".docx", ".png", ".jp
 
 export type FileText = {
   text: string;
-  /** How the text was obtained, shown to the archivist. */
-  method: "plain text" | "pdf text layer" | "pdf OCR" | "word document" | "image OCR";
+  /**
+   * How the text was obtained, shown to the archivist. Worded for a reader
+   * rather than a developer: which reader ran is not their concern.
+   */
+  method: "plain text" | "PDF" | "Word document" | "photo or scan";
   pages?: number;
   warning?: string;
 };
@@ -66,14 +69,14 @@ async function readPdf(bytes: Uint8Array): Promise<FileText> {
   }
 
   if (!looksEmpty(text)) {
-    return { text, method: "pdf text layer", pages: totalPages };
+    return { text, method: "PDF", pages: totalPages };
   }
 
   // A scanned PDF carries no text layer. Rendering its pages to images for
   // OCR needs a canvas implementation, which is a native dependency, so we
   // say so plainly rather than half-working.
   throw new FileReadError(
-    `This PDF has no text layer — it is ${totalPages > 0 ? `${totalPages} page${totalPages === 1 ? "" : "s"} of ` : ""}scanned images. Export a page as PNG or JPG and upload that instead; images are read with OCR.`,
+    `This PDF contains ${totalPages > 0 ? `${totalPages} page${totalPages === 1 ? "" : "s"} of ` : ""}scanned images rather than text. Export a page as PNG or JPG and upload that instead.`,
   );
 }
 
@@ -81,7 +84,7 @@ async function readDocx(buffer: Buffer): Promise<FileText> {
   const mammoth = await import("mammoth");
   try {
     const result = await mammoth.extractRawText({ buffer });
-    return { text: result.value, method: "word document" };
+    return { text: result.value, method: "Word document" };
   } catch {
     throw new FileReadError("That Word document could not be read. Only .docx is supported.");
   }
@@ -102,13 +105,13 @@ async function readImage(buffer: Buffer): Promise<FileText> {
     const text = data.text ?? "";
     if (looksEmpty(text)) {
       throw new FileReadError(
-        "No readable text was found in that image. A sharper or straighter scan usually helps.",
+        "No readable text was found in that image. A sharper, straighter photo usually helps.",
       );
     }
     return {
       text,
-      method: "image OCR",
-      warning: "OCR output is rough — check the years and spellings before extracting.",
+      method: "photo or scan",
+      warning: "Text read from an image can be rough — check the years and spellings.",
     };
   } finally {
     await worker.terminate();

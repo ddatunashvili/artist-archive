@@ -329,7 +329,7 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
             />
             <strong>{reading ? "Reading the file…" : "Drop a CV here"}</strong>
             <span>
-              PDF, Word, plain text, or a photo or scan read with OCR — or{" "}
+              PDF, Word, plain text, or a photo or scan of a printed page — or{" "}
               <button
                 type="button"
                 className="linklike"
