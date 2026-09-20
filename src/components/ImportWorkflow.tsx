@@ -462,7 +462,7 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
               View artist
             </a>
             {result.status !== "published" && (
-              <a className="button ghost" href="/review">
+              <a className="button ghost" href="/admin/review">
                 Open review queue
               </a>
             )}

@@ -146,3 +146,50 @@ export async function getArchiveStats() {
   ]);
   return { published, pending, artists };
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin reads                                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Admin list. Unlike the public catalogue this sees every status, so the
+ * status filter is explicit rather than defaulted to "published".
+ */
+export type AdminFilters = Omit<CatalogueFilters, "status"> & {
+  status?: EntryStatus | "all";
+};
+
+export async function findAdminEntries(filters: AdminFilters) {
+  const where = buildWhere({ ...filters, status: undefined });
+  if (filters.status && filters.status !== "all") where.status = filters.status;
+  else delete where.status;
+
+  return prisma.archiveEntry.findMany({
+    where,
+    orderBy: [{ createdAt: "desc" }],
+    include: { artist: { select: { name: true, slug: true } } },
+    take: 500,
+  });
+}
+
+export async function listArtists() {
+  return prisma.artist.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { entries: true } } },
+  });
+}
+
+export async function getArtistById(id: string) {
+  return prisma.artist.findUnique({ where: { id } });
+}
+
+/** Artists with at least one published record, for the public index. */
+export async function listPublishedArtists() {
+  return prisma.artist.findMany({
+    where: { entries: { some: { status: "published" } } },
+    orderBy: { name: "asc" },
+    include: {
+      _count: { select: { entries: { where: { status: "published" } } } },
+    },
+  });
+}

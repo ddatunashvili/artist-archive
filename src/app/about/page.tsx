@@ -20,13 +20,13 @@ export default async function AboutPage() {
 
       <h2>How a record gets in</h2>
       <ol style={{ maxWidth: "62ch", paddingLeft: 20 }}>
-        <li>An archivist pastes raw CV text on the <Link href="/import">import</Link> page.</li>
+        <li>An archivist pastes raw CV text on the <Link href="/admin/import">import</Link> page.</li>
         <li>The configured extractor proposes structured records. Nothing is stored yet.</li>
         <li>Every field is validated against the archive schema, and rejected if it does not fit.</li>
         <li>A human corrects the proposal, drops what should not be kept, and signs off by name.</li>
         <li>
           Records saved as <em>in review</em> wait in the{" "}
-          <Link href="/review">review queue</Link> for a second decision before they appear publicly.
+          <Link href="/admin/review">review queue</Link> for a second decision before they appear publicly.
         </li>
       </ol>
 

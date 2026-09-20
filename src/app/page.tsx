@@ -27,12 +27,7 @@ export default async function CataloguePage({ searchParams }: { searchParams: Se
 
       <p className="count">
         {entries.length} {entries.length === 1 ? "record" : "records"}
-        {stats.pending > 0 && (
-          <>
-            {" · "}
-            <Link href="/review">{stats.pending} awaiting review</Link>
-          </>
-        )}
+        {stats.pending > 0 && <> · {stats.pending} awaiting review</>}
       </p>
 
       <EntryTable entries={entries} />

@@ -187,3 +187,35 @@ export function fieldErrors(error: z.ZodError): { path: string; message: string 
     message: issue.message,
   }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Admin CRUD                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Create or replace a single record from the admin panel. */
+export const AdminEntrySchema = ExtractedEntrySchema.extend({
+  artistId: z.string().trim().min(1, "Choose an artist"),
+  status: z.enum(ENTRY_STATUSES).default("in_review"),
+  reviewedBy: optionalText(120),
+  reviewNote: optionalText(1000),
+  extractedBy: optionalText(40),
+});
+
+export type AdminEntry = z.infer<typeof AdminEntrySchema>;
+
+/** Partial update; every field optional so a form can send only what changed. */
+export const AdminEntryPatchSchema = AdminEntrySchema.partial();
+
+/** Create or update an artist from the admin panel. */
+export const AdminArtistSchema = ExtractedArtistSchema.extend({
+  slug: z
+    .preprocess(
+      (value) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined),
+      z.string().max(80).optional(),
+    )
+    .transform((value) => (value ? slugify(value) : undefined)),
+});
+
+export type AdminArtist = z.infer<typeof AdminArtistSchema>;
+
+export const AdminArtistPatchSchema = AdminArtistSchema.partial();
