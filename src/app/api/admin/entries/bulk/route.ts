@@ -49,8 +49,12 @@ export async function POST(request: Request) {
   const reviewedBy = parsed.data.reviewedBy?.trim() || session.name || session.email;
   const reviewed = action === "published" || action === "rejected";
 
+  // Records already in the target status are left alone. Re-stamping them
+  // would credit this sign-off to whoever happened to press the button,
+  // replacing the name of the person who actually made the decision — and it
+  // keeps `affected` meaning "changed" rather than "selected".
   const updated = await prisma.archiveEntry.updateMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, NOT: { status: action } },
     data: {
       status: action,
       ...(reviewed ? { reviewedBy, reviewedAt: new Date() } : {}),
