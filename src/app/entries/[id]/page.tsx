@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPlace, formatYears } from "@/components/EntryTable";
+import { coverFor } from "@/components/EntryGrid";
 import { getEntry } from "@/lib/queries";
 import { absoluteUrl, jsonLd, site } from "@/lib/site";
 import {
@@ -58,6 +59,9 @@ export default async function EntryPage({ params }: { params: Params }) {
     name: entry.title,
     url: absoluteUrl(`/entries/${entry.id}`),
     dateCreated: String(entry.year),
+    ...(entry.images.length
+      ? { image: entry.images.map((image) => absoluteUrl(image.url)) }
+      : {}),
     ...(entry.description ? { description: entry.description } : {}),
     ...(entry.url ? { sameAs: entry.url } : {}),
     creator: {
@@ -113,6 +117,34 @@ export default async function EntryPage({ params }: { params: Params }) {
           </p>
         )}
       </div>
+
+      {/* A CV carries no pictures, so a record with none shows its generated
+          cover rather than an empty frame. */}
+      {entry.images.length > 0 ? (
+        <ul className="gallery">
+          {entry.images.map((image) => (
+            <li key={image.id}>
+              <figure>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.url} alt={image.alt ?? entry.title} />
+                {(image.alt || image.credit) && (
+                  <figcaption>{[image.alt, image.credit].filter(Boolean).join(" — ")}</figcaption>
+                )}
+              </figure>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="gallery">
+          <li>
+            <figure>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverFor(entry).src} alt="" />
+              <figcaption>Generated cover — no image has been added yet</figcaption>
+            </figure>
+          </li>
+        </ul>
+      )}
 
       {entry.description && <p style={{ maxWidth: "64ch" }}>{entry.description}</p>}
 

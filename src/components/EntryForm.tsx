@@ -9,6 +9,7 @@ import {
   ENTRY_TYPES,
   ENTRY_TYPE_LABELS,
   fieldErrors,
+  parseImageList,
 } from "@/lib/schema";
 
 export type EntryFormValues = {
@@ -28,6 +29,8 @@ export type EntryFormValues = {
   reviewedBy: string;
   reviewNote: string;
   sourceText: string;
+  /** One image URL per line. */
+  images: string;
 };
 
 export const EMPTY_ENTRY: EntryFormValues = {
@@ -46,6 +49,7 @@ export const EMPTY_ENTRY: EntryFormValues = {
   reviewedBy: "",
   reviewNote: "",
   sourceText: "",
+  images: "",
 };
 
 /** Create and edit share one form; `values.id` decides which verb is used. */
@@ -91,6 +95,9 @@ export function EntryForm({
       reviewNote: values.reviewNote,
       sourceText: values.sourceText,
       extractedBy: "manual",
+      // Sent as the complete set: whatever is in the box replaces what the
+      // record had.
+      images: parseImageList(values.images),
     };
 
     const check = AdminEntrySchema.safeParse(payload);
@@ -240,6 +247,17 @@ export function EntryForm({
           <div className="field span-all">
             <label htmlFor="sourceText">Source CV line</label>
             <input id="sourceText" value={values.sourceText} onChange={(e) => set("sourceText", e.target.value)} />
+          </div>
+
+          <div className="field span-all">
+            <label htmlFor="images">Images — one URL per line</label>
+            <textarea
+              id="images"
+              rows={4}
+              value={values.images}
+              onChange={(e) => set("images", e.target.value)}
+              placeholder={"https://example.org/install-view-01.jpg\nhttps://example.org/install-view-02.jpg"}
+            />
           </div>
         </div>
       </div>

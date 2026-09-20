@@ -8,9 +8,11 @@ import { z } from "zod";
 
 export const ENTRY_TYPES = [
   "exhibition",
+  "residency",
+  "collaboration",
+  "commission",
   "publication",
   "award",
-  "residency",
   "education",
   "collection",
   "screening",
@@ -23,9 +25,11 @@ export type EntryType = (typeof ENTRY_TYPES)[number];
 
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
   exhibition: "Exhibition",
+  residency: "Residency",
+  collaboration: "Collaboration",
+  commission: "Commission",
   publication: "Publication",
   award: "Award & Grant",
-  residency: "Residency",
   education: "Education",
   collection: "Collection",
   screening: "Screening",
@@ -93,6 +97,10 @@ const entryTypeValue = z.preprocess((value) => {
     degree: "education",
     studies: "education",
     public_collection: "collection",
+    collaborations: "collaboration",
+    partnership: "collaboration",
+    commissions: "commission",
+    public_art: "commission",
     film: "screening",
     lecture: "talk",
     artist_talk: "talk",
@@ -118,6 +126,7 @@ export const ExtractedEntrySchema = z.object({
     z.number().min(0).max(1).optional(),
   ),
   sourceText: optionalText(1000),
+  images: z.array(z.object({ url: z.string(), alt: z.string().optional(), credit: z.string().optional() })).max(12).optional(),
 });
 
 export type ExtractedEntry = z.infer<typeof ExtractedEntrySchema>;
@@ -219,3 +228,31 @@ export const AdminArtistSchema = ExtractedArtistSchema.extend({
 export type AdminArtist = z.infer<typeof AdminArtistSchema>;
 
 export const AdminArtistPatchSchema = AdminArtistSchema.partial();
+
+/* ------------------------------------------------------------------ */
+/* Images                                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * An image attached to a record. CVs do not carry images, so these are added
+ * by an archivist; the extractor may still return one when the source text
+ * contains a direct link.
+ */
+export const EntryImageSchema = z.object({
+  url: urlValue.refine((value) => value !== undefined, { message: "Image URL is required" }),
+  alt: optionalText(300),
+  credit: optionalText(200),
+});
+
+export type EntryImage = z.infer<typeof EntryImageSchema>;
+
+export const EntryImagesSchema = z.array(EntryImageSchema).max(12).optional();
+
+/** Parses a textarea of one URL per line into image records. */
+export function parseImageList(input: string): { url: string }[] {
+  return input
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((url) => ({ url }));
+}

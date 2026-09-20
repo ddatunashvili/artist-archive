@@ -56,6 +56,7 @@ export default async function EditEntryPage({ params }: { params: Params }) {
           reviewedBy: text(entry.reviewedBy),
           reviewNote: text(entry.reviewNote),
           sourceText: text(entry.sourceText),
+          images: entry.images.map((image) => image.url).join("\n"),
         }}
         artists={artists.map((artist) => ({ id: artist.id, name: artist.name }))}
       />

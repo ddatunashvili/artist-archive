@@ -79,10 +79,29 @@ model ArchiveEntry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  images EntryImage[]
+
   @@index([artistId])
   @@index([status])
   @@index([type])
   @@index([year])
   @@index([country])
   @@index([city])
+}
+
+/// Images attached to a record. A CV never carries them, so they are added by
+/// an archivist during review or in the admin panel; the catalogue falls back
+/// to a generated cover when a record has none.
+model EntryImage {
+  id      String       @id @default(cuid())
+  entryId String
+  entry   ArchiveEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  url       String
+  alt       String?
+  credit    String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([entryId])
 }

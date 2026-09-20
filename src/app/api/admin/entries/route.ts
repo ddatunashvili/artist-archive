@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { artistId, status, reviewedBy, reviewNote, extractedBy, ...entry } = parsed.data;
+  const { artistId, status, reviewedBy, reviewNote, extractedBy, images, ...entry } = parsed.data;
 
   if (status === "published" && !reviewedBy) {
     return NextResponse.json({ error: "Publishing requires a reviewer name." }, { status: 400 });
@@ -38,7 +38,18 @@ export async function POST(request: Request) {
       extractedBy: extractedBy ?? "manual",
       reviewedBy: reviewed ? reviewedBy : null,
       reviewedAt: reviewed ? new Date() : null,
+      images: images?.length
+        ? {
+            create: images.map((image, index) => ({
+              url: image.url,
+              alt: image.alt,
+              credit: image.credit,
+              sortOrder: index,
+            })),
+          }
+        : undefined,
     },
+    include: { images: true },
   });
 
   return NextResponse.json(created, { status: 201 });

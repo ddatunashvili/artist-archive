@@ -59,7 +59,12 @@ export async function findEntries(filters: CatalogueFilters) {
   return prisma.archiveEntry.findMany({
     where: buildWhere(filters),
     orderBy: [{ year: "desc" }, { title: "asc" }],
-    include: { artist: { select: { name: true, slug: true } } },
+    include: {
+      artist: { select: { name: true, slug: true } },
+      // Only the first image is needed for a card; the rest load on the
+      // detail page.
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
     take: 500,
   });
 }
@@ -113,7 +118,7 @@ export async function getFilterOptions() {
 export async function getEntry(id: string) {
   return prisma.archiveEntry.findUnique({
     where: { id },
-    include: { artist: true },
+    include: { artist: true, images: { orderBy: { sortOrder: "asc" } } },
   });
 }
 
@@ -133,6 +138,7 @@ export async function getArtistBySlug(slug: string) {
       entries: {
         where: { status: "published" },
         orderBy: [{ year: "desc" }, { title: "asc" }],
+        include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
       },
     },
   });

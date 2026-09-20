@@ -10,14 +10,47 @@ the name of the person who approved it.
 
 ---
 
+## The idea
+
+An artist CV is a list of experiences written for a human reader:
+
+```
+2019 — Residency at Villa Medici, Rome
+2020 — Group exhibition at Palais de Tokyo, Paris
+```
+
+Each line becomes one archive record, extracted and validated:
+
+```json
+{
+  "type": "residency",
+  "title": "Residency at Villa Medici",
+  "year": 2019,
+  "venue": "Villa Medici",
+  "city": "Rome",
+  "country": "Italy",
+  "confidence": 0.87,
+  "sourceText": "2019 — Residency at Villa Medici, Rome",
+  "extractedBy": "mock"
+}
+```
+
+The country was not in the CV — it is resolved from the city, and only for
+cities the lookup knows. Nothing is stored until a person has checked it.
+
+[`docs/BRIEF.md`](docs/BRIEF.md) walks through the whole example, the field
+list and the reasoning behind it.
+
+---
+
 ## What it does
 
 **Public**
 
 | Page | Purpose |
 | --- | --- |
-| `/` | Catalogue of published records, filterable by type, year, location (country / city), artist and free text |
-| `/entries/[id]` | Detail page for one record: fields, provenance, source CV line |
+| `/` | Visual catalogue — card grid or dense index, filterable by type, year, location (country / city), artist and free text |
+| `/entries/[id]` | Detail page for one record: images, description, every field, provenance, source CV line |
 | `/artists` | Index of every artist with published records |
 | `/artists/[slug]` | A single artist archive, grouped back into CV sections |
 | `/about` | How a record gets in, and the current state of the archive |
@@ -266,6 +299,7 @@ public/
 - [`docs/AI_PROVIDERS.md`](docs/AI_PROVIDERS.md) — provider abstraction and adding a new one
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production: MySQL, migrations, `.env.prod`, go-live checklist
 - [`docs/ADMIN.md`](docs/ADMIN.md) — admin panel, analytics and the authentication model
+- [`docs/BRIEF.md`](docs/BRIEF.md) — the original brief answered: worked example, data structure, what is automated
 
 ---
 

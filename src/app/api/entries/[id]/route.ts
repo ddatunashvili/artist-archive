@@ -37,6 +37,9 @@ export async function PATCH(request: Request, { params }: Context) {
   }
 
   const { status, reviewedBy, reviewNote, patch } = parsed.data;
+  // Images are managed through /api/admin/entries/[id]; a review decision
+  // only touches scalar fields.
+  const { images: _ignoredImages, ...patchFields } = patch ?? {};
 
   if (status === "published" && !reviewedBy) {
     return NextResponse.json({ error: "Publishing requires a reviewer name." }, { status: 400 });
@@ -48,7 +51,7 @@ export async function PATCH(request: Request, { params }: Context) {
   const entry = await prisma.archiveEntry.update({
     where: { id },
     data: {
-      ...patch,
+      ...patchFields,
       ...(status ? { status, reviewedBy: reviewedBy ?? null, reviewedAt: new Date() } : {}),
       ...(reviewNote !== undefined ? { reviewNote } : {}),
     },

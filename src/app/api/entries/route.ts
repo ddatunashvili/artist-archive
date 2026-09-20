@@ -69,28 +69,42 @@ export async function POST(request: Request) {
       },
     });
 
-    await tx.archiveEntry.createMany({
-      data: entries.map((entry) => ({
-        artistId: record.id,
-        type: entry.type,
-        title: entry.title,
-        role: entry.role,
-        year: entry.year,
-        endYear: entry.endYear,
-        venue: entry.venue,
-        city: entry.city,
-        country: entry.country,
-        description: entry.description,
-        url: entry.url,
-        status,
-        confidence: entry.confidence,
-        sourceText: entry.sourceText,
-        extractedBy: extractedBy ?? "manual",
-        reviewedBy: reviewed ? reviewedBy : null,
-        reviewedAt: reviewed ? new Date() : null,
-        reviewNote,
-      })),
-    });
+    // One create per record rather than createMany: nested image writes are
+    // not supported by createMany, and a batch is at most a few hundred rows.
+    for (const entry of entries) {
+      await tx.archiveEntry.create({
+        data: {
+          artistId: record.id,
+          type: entry.type,
+          title: entry.title,
+          role: entry.role,
+          year: entry.year,
+          endYear: entry.endYear,
+          venue: entry.venue,
+          city: entry.city,
+          country: entry.country,
+          description: entry.description,
+          url: entry.url,
+          status,
+          confidence: entry.confidence,
+          sourceText: entry.sourceText,
+          extractedBy: extractedBy ?? "manual",
+          reviewedBy: reviewed ? reviewedBy : null,
+          reviewedAt: reviewed ? new Date() : null,
+          reviewNote,
+          images: entry.images?.length
+            ? {
+                create: entry.images.map((image, index) => ({
+                  url: image.url,
+                  alt: image.alt,
+                  credit: image.credit,
+                  sortOrder: index,
+                })),
+              }
+            : undefined,
+        },
+      });
+    }
 
     return record;
   });

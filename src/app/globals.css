@@ -1103,3 +1103,137 @@ blockquote.source {
     transition: none !important;
   }
 }
+
+/* ---------- visual catalogue ---------- */
+
+.view-switch {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: clamp(14px, 1.6vw, 24px) 0 0;
+}
+
+.entry-grid {
+  list-style: none;
+  margin: clamp(18px, 2vw, 30px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(240px, 21vw, 340px), 1fr));
+  gap: clamp(20px, 2.2vw, 44px) clamp(16px, 1.8vw, 34px);
+}
+
+.card-link {
+  display: block;
+  border: none;
+  color: inherit;
+}
+
+.card-link:hover {
+  border: none;
+}
+
+.card-frame {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--paper-3);
+  border: 1px solid var(--rule);
+}
+
+.card-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease, opacity 0.2s ease;
+}
+
+.card-link:hover .card-frame img {
+  transform: scale(1.03);
+}
+
+.card-link:hover .card-frame {
+  border-color: var(--ink);
+}
+
+/* Marks a card that is still using generated art rather than a photograph. */
+.card-flag {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+}
+
+.card-body {
+  display: block;
+  padding-top: 12px;
+}
+
+.card-meta {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card-title {
+  display: block;
+  font-size: var(--t-title);
+  line-height: 1.22;
+  letter-spacing: -0.012em;
+  margin-top: 6px;
+}
+
+.card-link:hover .card-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.card-sub {
+  display: block;
+  font-size: var(--t-meta);
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ---------- detail gallery ---------- */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(260px, 26vw, 460px), 1fr));
+  gap: clamp(14px, 1.4vw, 26px);
+  margin: 0 0 clamp(20px, 2vw, 34px);
+  padding: 0;
+  list-style: none;
+}
+
+.gallery figure {
+  margin: 0;
+}
+
+.gallery img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--rule);
+  background: var(--paper-3);
+}
+
+.gallery figcaption {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-top: 8px;
+}

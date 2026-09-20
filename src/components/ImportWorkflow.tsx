@@ -88,8 +88,8 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
 
   const kept = rows.filter((row) => row.include).length;
 
-  async function loadSample() {
-    const response = await fetch("/sample-cv.txt");
+  async function loadSample(file: string) {
+    const response = await fetch(file);
     setCv(await response.text());
     setError(null);
   }
@@ -272,8 +272,21 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
             <button type="button" onClick={runExtraction} disabled={busy || cv.trim().length < 20}>
               {busy ? "Extracting…" : "Extract records"}
             </button>
-            <button type="button" className="ghost" onClick={loadSample} disabled={busy}>
-              Load sample CV
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => loadSample("/brief-cv.txt")}
+              disabled={busy}
+            >
+              Load short example
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => loadSample("/sample-cv.txt")}
+              disabled={busy}
+            >
+              Load full CV
             </button>
           </div>
         </>

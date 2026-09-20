@@ -43,6 +43,9 @@ const MYSQL_NATIVE_TYPES = {
   "ArchiveEntry.url": "@db.VarChar(500)",
   "ArchiveEntry.sourceText": "@db.Text",
   "ArchiveEntry.reviewNote": "@db.Text",
+  "EntryImage.url": "@db.VarChar(600)",
+  "EntryImage.alt": "@db.VarChar(300)",
+  "EntryImage.credit": "@db.VarChar(200)",
 };
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
