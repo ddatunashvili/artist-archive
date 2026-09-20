@@ -1,24 +1,43 @@
-/* aeitos archive — minimal, monochrome, generous whitespace.
+/* aeitos archive — full-bleed, monochrome, generous whitespace.
    The brand is a hand-inked black wordmark on white, so the interface stays
-   strictly black and white; colour is reserved for record status only. */
+   strictly black and white; colour is reserved for record status only.
+
+   Type and spacing are fluid: every size is a clamp() against viewport width,
+   so the layout reads the same on a laptop and on a large studio display
+   without breakpoint jumps. */
 
 :root {
   --paper: #ffffff;
   --paper-2: #f7f7f5;
-  --paper-3: #efefec;
+  --paper-3: #eceae5;
   --ink: #0b0b0b;
-  --ink-soft: #3a3a38;
+  --ink-soft: #33332f;
   --muted: #76766f;
-  --rule: #e6e6e1;
-  --rule-strong: #c7c7c0;
+  --rule: #e4e4de;
+  --rule-strong: #c2c2ba;
 
   /* status only */
   --ok: #33603f;
   --flag: #7d6520;
   --warn: #8a3020;
 
-  --max: 1180px;
-  --gutter: 28px;
+  /* Full-bleed, with a ceiling so a 4K display does not stretch a four-column
+     table across two feet of glass. */
+  --max: 2400px;
+  --gutter: clamp(20px, 3.6vw, 76px);
+
+  /* fluid type scale */
+  --t-body: clamp(16px, 0.34vw + 15px, 19px);
+  --t-display: clamp(40px, 5.4vw, 88px);
+  --t-title: clamp(19px, 0.72vw + 16px, 26px);
+  --t-lede: clamp(17px, 0.42vw + 15.6px, 21px);
+  --t-label: clamp(10px, 0.16vw + 9.4px, 12px);
+  --t-meta: clamp(12px, 0.22vw + 11.2px, 14.5px);
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia,
+    "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
   color-scheme: light;
 }
 
@@ -32,13 +51,18 @@ body {
   padding: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-  font-size: 16px;
-  line-height: 1.6;
+  font-family: var(--serif);
+  font-size: var(--t-body);
+  line-height: 1.62;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
@@ -46,11 +70,21 @@ a {
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--rule-strong);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.16s ease, color 0.16s ease;
 }
 
 a:hover {
   border-bottom-color: var(--ink);
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .mono,
@@ -65,29 +99,44 @@ th,
 .tag,
 .count,
 .steps,
-.stat .value {
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+.pill,
+.stat .value,
+.stat .key,
+.bar-value,
+.histogram-axis,
+.backlink,
+.strapline,
+.site-footer,
+.demo-creds,
+h2 {
+  font-family: var(--mono);
 }
 
 .shell {
   max-width: var(--max);
   margin: 0 auto;
   padding: 0 var(--gutter);
+  width: 100%;
+}
+
+img,
+table {
+  max-width: 100%;
 }
 
 /* ---------- header ---------- */
 
 .site-header {
   border-bottom: 1px solid var(--ink);
-  padding: 26px 0 16px;
-  margin-bottom: 44px;
+  padding: clamp(20px, 2.4vw, 40px) 0 clamp(14px, 1.4vw, 24px);
+  margin-bottom: clamp(32px, 4vw, 72px);
 }
 
 .site-header .row {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 28px;
+  gap: clamp(20px, 3vw, 56px);
   flex-wrap: wrap;
 }
 
@@ -97,10 +146,11 @@ th,
   line-height: 0;
 }
 
+/* The logo is the loudest thing on the page, by design. */
 .wordmark img {
   display: block;
   width: auto;
-  height: 42px;
+  height: clamp(52px, 7.4vw, 132px);
 }
 
 .wordmark:hover {
@@ -109,25 +159,25 @@ th,
 
 .strapline {
   color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  margin-top: 10px;
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-top: clamp(10px, 1vw, 18px);
 }
 
 .site-header nav {
   display: flex;
-  gap: 22px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  gap: clamp(16px, 1.8vw, 34px);
+  font-size: var(--t-meta);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
 }
 
 .site-header nav a {
   border-bottom: 1px solid transparent;
   color: var(--muted);
-  padding-bottom: 2px;
+  padding-bottom: 3px;
 }
 
 .site-header nav a:hover {
@@ -138,39 +188,57 @@ th,
 /* ---------- headings ---------- */
 
 h1 {
-  font-size: 38px;
+  font-size: clamp(30px, 2.7vw, 50px);
   font-weight: 400;
-  line-height: 1.12;
-  margin: 0 0 10px;
-  letter-spacing: -0.015em;
+  line-height: 1.06;
+  margin: 0 0 clamp(10px, 1vw, 20px);
+  letter-spacing: -0.02em;
+}
+
+/* Landing and detail pages lead with the title, so it goes full display size.
+   Admin screens keep the smaller h1 so a heading never crowds its toolbar. */
+.page-head h1,
+.detail-head h1 {
+  font-size: var(--t-display);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
 }
 
 h2 {
-  font-size: 11px;
+  font-size: var(--t-label);
   font-weight: 400;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--muted);
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   border-bottom: 1px solid var(--rule);
-  padding-bottom: 8px;
-  margin: 48px 0 18px;
+  padding-bottom: 10px;
+  margin: clamp(40px, 4.4vw, 76px) 0 clamp(16px, 1.6vw, 28px);
 }
 
 h3 {
-  font-size: 19px;
+  font-size: var(--t-title);
   font-weight: 400;
-  margin: 0 0 4px;
-  letter-spacing: -0.01em;
+  margin: 0 0 5px;
+  letter-spacing: -0.012em;
+  line-height: 1.22;
 }
 
 p {
   margin: 0 0 14px;
 }
 
+/* Long prose stays readable even though the page is full-bleed. */
 .lede {
-  max-width: 64ch;
+  max-width: min(58ch, 100%);
   color: var(--muted);
+  font-size: var(--t-lede);
+  line-height: 1.5;
+}
+
+.page-head {
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: clamp(18px, 2vw, 34px);
+  margin-bottom: clamp(20px, 2.2vw, 38px);
 }
 
 /* ---------- filters ---------- */
@@ -178,23 +246,22 @@ p {
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 20px;
+  gap: clamp(12px, 1.2vw, 22px) clamp(16px, 1.8vw, 34px);
   align-items: flex-end;
-  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
-  padding: 18px 0;
+  padding: 0 0 clamp(16px, 1.8vw, 28px);
   margin-bottom: 8px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 label {
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -202,13 +269,20 @@ label {
 input,
 select,
 textarea {
-  font-size: 13px;
-  padding: 8px 9px;
+  font-size: var(--t-meta);
+  padding: 10px 11px;
   border: 1px solid var(--rule-strong);
   background: transparent;
   color: var(--ink);
   border-radius: 0;
-  min-width: 150px;
+  min-width: 170px;
+  transition: border-color 0.16s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--ink-soft);
 }
 
 input:focus,
@@ -216,37 +290,39 @@ select:focus,
 textarea:focus {
   outline: 1px solid var(--ink);
   outline-offset: -1px;
+  border-color: var(--ink);
 }
 
 textarea {
   width: 100%;
-  line-height: 1.55;
+  line-height: 1.58;
   resize: vertical;
 }
 
 button,
 .button {
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 9px 16px;
+  padding: 11px 20px;
   border: 1px solid var(--ink);
   background: var(--ink);
   color: var(--paper);
   cursor: pointer;
   border-radius: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.16s ease, background 0.16s ease, color 0.16s ease;
+  line-height: 1.1;
 }
 
 button:hover:not(:disabled),
 .button:hover {
-  opacity: 0.72;
+  opacity: 0.74;
   color: var(--paper);
   border-color: var(--ink);
 }
 
 button:disabled {
-  opacity: 0.35;
+  opacity: 0.32;
   cursor: not-allowed;
 }
 
@@ -269,11 +345,12 @@ button.danger,
 .button.danger {
   background: transparent;
   color: var(--warn);
-  border-color: var(--warn);
+  border-color: var(--rule-strong);
 }
 
 button.danger:hover:not(:disabled) {
   background: var(--warn);
+  border-color: var(--warn);
   color: var(--paper);
   opacity: 1;
 }
@@ -281,9 +358,10 @@ button.danger:hover:not(:disabled) {
 /* ---------- catalogue table ---------- */
 
 .count {
-  font-size: 12px;
+  font-size: var(--t-meta);
   color: var(--muted);
-  margin: 16px 0 6px;
+  margin: clamp(16px, 1.8vw, 28px) 0 8px;
+  letter-spacing: 0.04em;
 }
 
 table.catalogue {
@@ -293,55 +371,118 @@ table.catalogue {
 
 table.catalogue th {
   text-align: left;
-  font-size: 10px;
+  font-size: var(--t-label);
   font-weight: 400;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 9px 14px 9px 0;
+  padding: 0 clamp(16px, 1.6vw, 34px) 12px 0;
   border-bottom: 1px solid var(--ink);
   white-space: nowrap;
 }
 
 table.catalogue td {
-  padding: 14px 14px 14px 0;
+  padding: clamp(16px, 1.5vw, 26px) clamp(16px, 1.6vw, 34px) clamp(16px, 1.5vw, 26px) 0;
   border-bottom: 1px solid var(--rule);
-  vertical-align: top;
+  vertical-align: baseline;
+  transition: background 0.14s ease;
 }
 
-table.catalogue tr:hover td {
+table.catalogue tbody tr:hover td {
   background: var(--paper-2);
 }
 
 td.year {
-  width: 88px;
+  width: clamp(80px, 8vw, 150px);
   color: var(--muted);
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: var(--t-meta);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 td.title a {
-  border-bottom: none;
+  border-bottom: 1px solid transparent;
 }
 
-td.title a:hover {
-  border-bottom: 1px solid var(--ink);
+table.catalogue tbody tr:hover td.title a {
+  border-bottom-color: var(--ink);
+}
+
+/* The title is the object of the page, so it carries the display face. */
+td.title > a,
+td.title > .t {
+  font-size: var(--t-title);
+  line-height: 1.24;
+  letter-spacing: -0.012em;
+  display: inline-block;
+  max-width: 52ch;
 }
 
 td.title .sub {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-meta);
+  margin-top: 4px;
 }
 
 td.type {
-  width: 150px;
+  width: clamp(130px, 11vw, 190px);
 }
 
 td.place {
-  width: 30%;
+  width: 26%;
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--t-meta);
+}
+
+/* Catalogue index columns. Widths are proportional so the row fills the page
+   instead of leaving a gap in the middle at desktop width. */
+td.c-artist,
+th.c-artist {
+  width: 17%;
+}
+
+td.c-venue,
+th.c-venue {
+  width: 19%;
+}
+
+td.c-city,
+th.c-city {
+  width: 11%;
+}
+
+td.c-country,
+th.c-country {
+  width: 11%;
+}
+
+td.c-artist,
+td.c-venue,
+td.c-city,
+td.c-country {
+  color: var(--muted);
+  font-size: var(--t-meta);
+}
+
+td.c-artist a {
+  border-bottom-color: transparent;
+}
+
+td.c-artist a:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* Shown only once the dedicated columns have been dropped. */
+.only-narrow {
+  display: none;
+}
+
+/* Two-column lists (an artist page works list, recent activity) should not be
+   stretched across a full-bleed page. */
+table.catalogue.works {
+  max-width: 1200px;
 }
 
 td.actions-cell {
@@ -349,15 +490,23 @@ td.actions-cell {
   white-space: nowrap;
 }
 
+td.num {
+  font-family: var(--mono);
+  font-size: var(--t-meta);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .tag {
   display: inline-block;
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   border: 1px solid var(--rule-strong);
-  padding: 3px 8px;
+  padding: 4px 10px;
   color: var(--muted);
   white-space: nowrap;
+  line-height: 1.3;
 }
 
 .tag.flag {
@@ -382,59 +531,93 @@ td.actions-cell {
 }
 
 .empty {
-  padding: 56px 0;
+  padding: clamp(56px, 7vw, 120px) 0;
   color: var(--muted);
   border-bottom: 1px solid var(--rule);
+  font-size: var(--t-lede);
 }
 
 /* ---------- detail ---------- */
 
 .detail-head {
   border-bottom: 1px solid var(--ink);
-  padding-bottom: 22px;
-  margin-bottom: 26px;
+  padding-bottom: clamp(20px, 2.2vw, 38px);
+  margin-bottom: clamp(22px, 2.4vw, 42px);
+}
+
+article > p {
+  max-width: 66ch;
+  font-size: var(--t-lede);
+  line-height: 1.58;
 }
 
 dl.facts {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: clamp(150px, 15vw, 250px) minmax(0, 1fr);
   gap: 0;
   margin: 0;
+  max-width: 1000px;
+}
+
+/* Record and Provenance sit side by side once there is room, so a section
+   rule never runs far past the list it heads. */
+.detail-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+  gap: 0 clamp(40px, 5vw, 110px);
+  align-items: start;
+}
+
+.detail-cols dl.facts {
+  max-width: none;
+}
+
+.detail-cols section:first-child h2 {
+  margin-top: clamp(40px, 4.4vw, 76px);
+}
+
+/* The second column should line up with the first, not start lower. */
+@media (min-width: 900px) {
+  .detail-cols section h2 {
+    margin-top: clamp(40px, 4.4vw, 76px);
+  }
 }
 
 dl.facts dt {
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--rule);
 }
 
 dl.facts dd {
   margin: 0;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--rule);
+  overflow-wrap: anywhere;
 }
 
 blockquote.source {
   margin: 0;
-  padding: 13px 17px;
+  padding: clamp(14px, 1.4vw, 22px) clamp(16px, 1.6vw, 26px);
   border-left: 2px solid var(--rule-strong);
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--t-meta);
   background: var(--paper-2);
+  max-width: 100ch;
 }
 
 .backlink {
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--muted);
   border: none;
   display: inline-block;
-  margin-bottom: 22px;
+  margin-bottom: clamp(18px, 2vw, 32px);
 }
 
 .backlink:hover {
@@ -447,31 +630,36 @@ blockquote.source {
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(16px, 1.6vw, 26px);
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .review-card {
   border: 1px solid var(--rule);
-  padding: 18px;
+  padding: clamp(16px, 1.6vw, 28px);
   background: var(--paper);
+  transition: border-color 0.16s ease;
+}
+
+.review-card:hover {
+  border-color: var(--rule-strong);
 }
 
 .review-card.dropped {
-  opacity: 0.42;
+  opacity: 0.4;
 }
 
 .review-card .grid,
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(12px, 1.1vw, 20px) clamp(14px, 1.3vw, 26px);
 }
 
 .review-card .grid input,
@@ -491,16 +679,16 @@ blockquote.source {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 16px;
+  margin-bottom: clamp(12px, 1.2vw, 20px);
   flex-wrap: wrap;
 }
 
 .notice {
   border: 1px solid var(--rule-strong);
   border-left-width: 3px;
-  padding: 13px 15px;
-  font-size: 14px;
+  padding: clamp(13px, 1.2vw, 20px) clamp(15px, 1.4vw, 24px);
+  font-size: var(--t-meta);
   background: var(--paper-2);
 }
 
@@ -519,18 +707,18 @@ blockquote.source {
 .errors {
   margin: 8px 0 0;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: var(--t-meta);
   color: var(--warn);
 }
 
 .steps {
   display: flex;
-  gap: 10px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  gap: 12px;
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 28px;
+  margin-bottom: clamp(22px, 2.4vw, 38px);
   flex-wrap: wrap;
 }
 
@@ -544,11 +732,10 @@ blockquote.source {
 .admin-bar {
   background: var(--ink);
   color: var(--paper);
-  padding: 9px 0;
-  margin-bottom: 0;
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  padding: clamp(9px, 0.9vw, 14px) 0;
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -556,20 +743,21 @@ blockquote.source {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: clamp(16px, 2vw, 40px);
   flex-wrap: wrap;
 }
 
 .admin-bar nav {
   display: flex;
-  gap: 20px;
+  gap: clamp(14px, 1.6vw, 30px);
   flex-wrap: wrap;
 }
 
 .admin-bar a {
   color: var(--paper);
   border-bottom: 1px solid transparent;
-  opacity: 0.68;
+  opacity: 0.64;
+  padding-bottom: 2px;
 }
 
 .admin-bar a:hover,
@@ -578,16 +766,11 @@ blockquote.source {
   border-bottom-color: var(--paper);
 }
 
-.admin-bar form {
-  display: inline;
-}
-
 .admin-bar button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.34);
   color: var(--paper);
-  padding: 4px 10px;
-  font-size: 10px;
+  padding: 5px 12px;
 }
 
 .admin-bar button:hover {
@@ -597,7 +780,7 @@ blockquote.source {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   border-top: 1px solid var(--ink);
   border-left: 1px solid var(--rule);
 }
@@ -605,52 +788,53 @@ blockquote.source {
 .stat {
   border-right: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
-  padding: 18px;
+  padding: clamp(18px, 1.8vw, 32px);
 }
 
 .stat .value {
   display: block;
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: clamp(32px, 3.2vw, 56px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat .key {
   display: block;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: 8px;
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  margin-top: clamp(10px, 1vw, 16px);
 }
 
 .stat .delta {
   display: block;
-  font-size: 11px;
+  font-size: var(--t-meta);
   color: var(--muted);
-  margin-top: 4px;
+  margin-top: 5px;
+  font-family: var(--serif);
 }
 
 .panels {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 0 clamp(32px, 4vw, 80px);
 }
 
 /* bar chart, built from divs so there is no charting dependency */
 .bars {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
 }
 
 .bar-row {
   display: grid;
-  grid-template-columns: 130px 1fr 48px;
+  grid-template-columns: clamp(120px, 11vw, 200px) minmax(0, 1fr) 52px;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: 14px;
+  font-size: var(--t-meta);
 }
 
 .bar-row .bar-label {
@@ -662,28 +846,29 @@ blockquote.source {
 
 .bar-track {
   background: var(--paper-3);
-  height: 12px;
+  height: 14px;
   position: relative;
 }
 
 .bar-fill {
   background: var(--ink);
   height: 100%;
+  transition: width 0.3s ease;
 }
 
 .bar-row .bar-value {
   text-align: right;
   color: var(--muted);
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: var(--t-meta);
+  font-variant-numeric: tabular-nums;
 }
 
 /* year histogram */
 .histogram {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
-  height: 130px;
+  gap: clamp(3px, 0.4vw, 8px);
+  height: clamp(130px, 15vw, 240px);
   border-bottom: 1px solid var(--ink);
   padding-top: 8px;
 }
@@ -692,29 +877,29 @@ blockquote.source {
   flex: 1;
   background: var(--ink);
   min-height: 2px;
-  position: relative;
+  transition: opacity 0.14s ease;
 }
 
 .histogram .col:hover {
-  opacity: 0.6;
+  opacity: 0.45;
 }
 
 .histogram-axis {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: var(--t-label);
+  letter-spacing: 0.1em;
   color: var(--muted);
-  margin-top: 6px;
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  margin-top: 8px;
 }
 
 .login-wrap {
-  max-width: 400px;
-  margin: 6vh auto 0;
+  max-width: 440px;
+  margin: clamp(4vh, 8vh, 12vh) auto 0;
 }
 
 .login-wrap .field {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .login-wrap input {
@@ -723,38 +908,37 @@ blockquote.source {
 
 .demo-creds {
   border: 1px dashed var(--rule-strong);
-  padding: 12px 14px;
-  font-size: 12px;
+  padding: clamp(13px, 1.3vw, 20px);
+  font-size: var(--t-meta);
   color: var(--muted);
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  margin-bottom: 20px;
-  line-height: 1.7;
+  margin-bottom: clamp(18px, 2vw, 28px);
+  line-height: 1.85;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 16px;
+  gap: clamp(16px, 2vw, 36px);
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: clamp(14px, 1.6vw, 26px);
 }
 
 .pill-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin: 14px 0;
+  margin: clamp(14px, 1.6vw, 24px) 0;
 }
 
 .pill {
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 5px 11px;
+  padding: 7px 14px;
   border: 1px solid var(--rule-strong);
   color: var(--muted);
+  line-height: 1.3;
 }
 
 .pill:hover {
@@ -771,36 +955,96 @@ blockquote.source {
 /* ---------- footer ---------- */
 
 .site-footer {
-  margin-top: 80px;
-  border-top: 1px solid var(--rule);
-  padding: 22px 0 56px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  margin-top: clamp(64px, 8vw, 140px);
+  border-top: 1px solid var(--ink);
+  padding: clamp(18px, 1.8vw, 30px) 0 clamp(48px, 5vw, 90px);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
-  gap: 18px;
+  gap: 20px;
   flex-wrap: wrap;
-  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 1500px) {
+  td.c-venue,
+  th.c-venue {
+    display: none;
+  }
+
+  td.c-artist,
+  th.c-artist {
+    width: 22%;
+  }
+
+  td.c-city,
+  th.c-city,
+  td.c-country,
+  th.c-country {
+    width: 14%;
+  }
+}
+
+@media (max-width: 1180px) {
+  td.c-city,
+  th.c-city,
+  td.c-country,
+  th.c-country {
+    display: none;
+  }
+
+  td.c-artist,
+  th.c-artist {
+    width: 26%;
+  }
+}
+
+@media (max-width: 860px) {
+  td.place,
+  th.place {
+    display: none;
+  }
+
+  td.c-artist,
+  th.c-artist {
+    display: none;
+  }
+
+  .only-narrow {
+    display: block;
+  }
 }
 
 @media (max-width: 760px) {
-  :root {
-    --gutter: 18px;
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
-  h1 {
-    font-size: 27px;
+  .filters .field {
+    min-width: 0;
   }
 
-  .wordmark img {
-    height: 32px;
+  .filters .actions {
+    grid-column: 1 / -1;
   }
 
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
   td.type,
-  th.type,
-  td.place,
-  th.place {
+  th.type {
     display: none;
   }
 
@@ -814,6 +1058,16 @@ blockquote.source {
   }
 
   .bar-row {
-    grid-template-columns: 96px 1fr 40px;
+    grid-template-columns: 100px minmax(0, 1fr) 42px;
+  }
+
+  .site-header nav {
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
   }
 }

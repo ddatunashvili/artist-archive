@@ -16,10 +16,12 @@ export default async function ArtistsIndexPage() {
 
   return (
     <>
-      <h1>Artists</h1>
-      <p className="lede">
-        {artists.length} {artists.length === 1 ? "artist" : "artists"} with published records.
-      </p>
+      <div className="page-head">
+        <h1>Artists</h1>
+        <p className="lede">
+          {artists.length} {artists.length === 1 ? "artist" : "artists"} with published records.
+        </p>
+      </div>
 
       {artists.length === 0 ? (
         <p className="empty">No published records yet.</p>
@@ -28,8 +30,9 @@ export default async function ArtistsIndexPage() {
           <thead>
             <tr>
               <th>Name</th>
+              <th className="c-artist">Nationality</th>
               <th className="type">Born</th>
-              <th className="place">Based in</th>
+              <th className="c-venue">Based in</th>
               <th>Records</th>
             </tr>
           </thead>
@@ -38,10 +41,13 @@ export default async function ArtistsIndexPage() {
               <tr key={artist.id}>
                 <td className="title">
                   <Link href={`/artists/${artist.slug}`}>{artist.name}</Link>
-                  {artist.nationality && <div className="sub">{artist.nationality}</div>}
+                  <div className="sub only-narrow">
+                    {[artist.nationality, artist.basedIn].filter(Boolean).join(" · ")}
+                  </div>
                 </td>
-                <td className="type">{artist.birthYear ?? "—"}</td>
-                <td className="place">{artist.basedIn ?? "—"}</td>
+                <td className="c-artist">{artist.nationality ?? "—"}</td>
+                <td className="type num">{artist.birthYear ?? "—"}</td>
+                <td className="c-venue">{artist.basedIn ?? "—"}</td>
                 <td className="year">{artist._count.entries}</td>
               </tr>
             ))}

@@ -17,11 +17,13 @@ export default async function CataloguePage({ searchParams }: { searchParams: Se
 
   return (
     <>
-      <h1>Catalogue</h1>
-      <p className="lede">
-        {stats.published} published records across {stats.artists} artists. Filter by type, year or
-        location; every record keeps the CV line it came from.
-      </p>
+      <div className="page-head">
+        <h1>Catalogue</h1>
+        <p className="lede">
+          {stats.published} published records across {stats.artists} artists. Filter by type, year
+          or location; every record keeps the CV line it came from.
+        </p>
+      </div>
 
       <Filters options={options} active={filters} />
 

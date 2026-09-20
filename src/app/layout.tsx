@@ -87,13 +87,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="row">
               <div>
                 <Link href="/" className="wordmark" aria-label={`${site.shortName} — home`}>
+                  {/* Sized by .wordmark img, which scales with the viewport. */}
                   <Image
                     src={site.logo}
                     alt={site.shortName}
                     width={2500}
                     height={840}
                     priority
-                    style={{ height: 42, width: "auto" }}
+                    sizes="(max-width: 680px) 60vw, 34vw"
                   />
                 </Link>
                 <div className="strapline">archive — {site.tagline.toLowerCase()}</div>

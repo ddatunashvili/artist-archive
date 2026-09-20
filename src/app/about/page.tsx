@@ -12,11 +12,13 @@ export default async function AboutPage() {
 
   return (
     <article>
-      <h1>About this archive</h1>
-      <p className="lede">
-        A prototype for turning artist CVs — the least structured document in the art world — into a
-        catalogue that can be filtered, cited and linked.
-      </p>
+      <div className="page-head">
+        <h1>About this archive</h1>
+        <p className="lede">
+          A prototype for turning artist CVs — the least structured document in the art world —
+          into a catalogue that can be filtered, cited and linked.
+        </p>
+      </div>
 
       <h2>How a record gets in</h2>
       <ol style={{ maxWidth: "62ch", paddingLeft: 20 }}>

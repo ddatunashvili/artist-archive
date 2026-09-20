@@ -95,7 +95,7 @@ export default async function ArtistPage({ params }: { params: Params }) {
       {[...sections.entries()].map(([type, entries]) => (
         <section key={type}>
           <h2>{ENTRY_TYPE_LABELS[type as EntryType] ?? type}</h2>
-          <table className="catalogue">
+          <table className="catalogue works">
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id}>

@@ -116,6 +116,10 @@ export default async function EntryPage({ params }: { params: Params }) {
 
       {entry.description && <p style={{ maxWidth: "64ch" }}>{entry.description}</p>}
 
+      {/* Two columns on a wide screen, so the section rules and the data they
+          head line up instead of the rules running past a narrow list. */}
+      <div className="detail-cols">
+        <section>
       <h2>Record</h2>
       <dl className="facts">
         <dt>Type</dt>
@@ -148,7 +152,9 @@ export default async function EntryPage({ params }: { params: Params }) {
           </>
         )}
       </dl>
+        </section>
 
+        <section>
       <h2>Provenance</h2>
       <dl className="facts">
         <dt>Status</dt>
@@ -176,6 +182,8 @@ export default async function EntryPage({ params }: { params: Params }) {
         <dt>Added</dt>
         <dd>{entry.createdAt.toISOString().slice(0, 10)}</dd>
       </dl>
+        </section>
+      </div>
 
       {entry.sourceText && (
         <>
