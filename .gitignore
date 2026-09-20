@@ -19,9 +19,9 @@ prisma/*.db
 prisma/*.db-journal
 
 # env files - never commit real credentials
+# Ignore every .env variant, then allow back only the placeholder example.
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 # logs

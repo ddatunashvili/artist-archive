@@ -1,12 +1,21 @@
 #!/usr/bin/env node
 /**
- * Rewrites the `provider` line of prisma/schema.prisma from DATABASE_PROVIDER.
+ * Applies DATABASE_PROVIDER to prisma/schema.prisma.
  *
- * Prisma requires a literal provider in the schema, so switching from the
- * local SQLite demo to a server database is a one-line patch rather than a
- * second schema file. Connection details stay in DATABASE_URL.
+ * Two jobs:
  *
- *   DATABASE_PROVIDER=postgresql npm run db:provider
+ * 1. Rewrite the `provider` line. Prisma requires a literal there, so moving
+ *    from the local SQLite demo to a server database is a patch, not a second
+ *    schema file. Connection details stay in DATABASE_URL.
+ *
+ * 2. Add or remove MySQL column types. MySQL maps a Prisma `String` to
+ *    VARCHAR(191), which is shorter than several limits in the Zod contract
+ *    (a 3000-character bio, a 2000-character description). Without this the
+ *    first long CV entry fails on insert. SQLite and PostgreSQL both store
+ *    unbounded TEXT, so they need no annotations - and carrying MySQL ones
+ *    into a SQLite schema is a validation error, hence the stripping.
+ *
+ *   DATABASE_PROVIDER=mysql npm run db:provider
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -14,10 +23,27 @@ import { fileURLToPath } from "node:url";
 
 const SUPPORTED = ["sqlite", "postgresql", "mysql", "sqlserver", "cockroachdb"];
 
+/**
+ * Model.field -> MySQL native type. Widths mirror the `max()` values in
+ * src/lib/schema.ts; anything above a few hundred characters becomes TEXT.
+ * Indexed columns stay at or below 768 bytes (utf8mb4, DYNAMIC row format).
+ */
+const MYSQL_NATIVE_TYPES = {
+  "Artist.name": "@db.VarChar(200)",
+  "Artist.website": "@db.VarChar(500)",
+  "Artist.bio": "@db.Text",
+  "ArchiveEntry.title": "@db.VarChar(300)",
+  "ArchiveEntry.venue": "@db.VarChar(200)",
+  "ArchiveEntry.description": "@db.Text",
+  "ArchiveEntry.url": "@db.VarChar(500)",
+  "ArchiveEntry.sourceText": "@db.Text",
+  "ArchiveEntry.reviewNote": "@db.Text",
+};
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const schemaPath = resolve(root, "prisma/schema.prisma");
 
-// Minimal .env reader: no dependency, and it never prints values.
+/** Minimal .env reader: no dependency, and it never prints values. */
 function readEnvFile(path) {
   try {
     const out = {};
@@ -32,6 +58,39 @@ function readEnvFile(path) {
   }
 }
 
+function setProvider(schema, provider) {
+  return schema.replace(
+    /(datasource\s+db\s*\{[^}]*?provider\s*=\s*)"[^"]+"/,
+    `$1"${provider}"`,
+  );
+}
+
+/** Removes every `@db.*` attribute so the next provider starts from clean. */
+function stripNativeTypes(schema) {
+  return schema.replace(/[ \t]+@db\.\w+(\([^)]*\))?/g, "");
+}
+
+/** Appends the configured `@db.*` attribute to each listed field. */
+function applyNativeTypes(schema, types) {
+  let out = schema;
+
+  for (const [key, attribute] of Object.entries(types)) {
+    const [model, field] = key.split(".");
+    const block = new RegExp(`(model\\s+${model}\\s*\\{)([\\s\\S]*?)(\\n\\})`);
+
+    out = out.replace(block, (whole, open, body, close) => {
+      const line = new RegExp(`^([ \\t]*${field}\\s+\\S+)(.*)$`, "m");
+      if (!line.test(body)) {
+        console.warn(`warning: ${model}.${field} not found in the schema, skipping`);
+        return whole;
+      }
+      return open + body.replace(line, `$1$2 ${attribute}`) + close;
+    });
+  }
+
+  return out;
+}
+
 const fromFile = readEnvFile(resolve(root, ".env"));
 const provider = (process.env.DATABASE_PROVIDER || fromFile.DATABASE_PROVIDER || "sqlite").trim();
 
@@ -42,16 +101,26 @@ if (!SUPPORTED.includes(provider)) {
   process.exit(1);
 }
 
-const schema = readFileSync(schemaPath, "utf8");
-const patched = schema.replace(
-  /(datasource\s+db\s*\{[^}]*?provider\s*=\s*)"[^"]+"/,
-  `$1"${provider}"`,
-);
+const original = readFileSync(schemaPath, "utf8");
+let schema = stripNativeTypes(setProvider(original, provider));
 
-if (patched === schema) {
-  console.log(`prisma/schema.prisma already uses provider "${provider}".`);
+if (provider === "mysql") {
+  schema = applyNativeTypes(schema, MYSQL_NATIVE_TYPES);
+}
+
+if (provider === "sqlserver") {
+  console.warn(
+    "note: SQL Server caps String at NVARCHAR(1000); long text columns need @db.NVarChar(Max).",
+  );
+}
+
+if (schema === original) {
+  console.log(`prisma/schema.prisma already set up for "${provider}".`);
 } else {
-  writeFileSync(schemaPath, patched);
+  writeFileSync(schemaPath, schema);
   console.log(`prisma/schema.prisma provider set to "${provider}".`);
+  if (provider === "mysql") {
+    console.log(`applied ${Object.keys(MYSQL_NATIVE_TYPES).length} MySQL column types.`);
+  }
   console.log("Next: npm run db:generate && npm run db:migrate");
 }

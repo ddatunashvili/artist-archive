@@ -10,20 +10,20 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite" // managed by scripts/set-db-provider.mjs
+  provider = "mysql" // managed by scripts/set-db-provider.mjs
   url      = env("DATABASE_URL")
 }
 
 model Artist {
   id          String   @id @default(cuid())
-  name        String
+  name        String @db.VarChar(200)
   slug        String   @unique
   birthYear   Int?
   deathYear   Int?
   nationality String?
   basedIn     String?
-  website     String?
-  bio         String?
+  website     String? @db.VarChar(500)
+  bio         String? @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -42,17 +42,17 @@ model ArchiveEntry {
 
   /// exhibition | publication | award | residency | education | collection | screening | talk | performance | other
   type        String
-  title       String
+  title       String @db.VarChar(300)
   /// Artist's role, e.g. "solo", "group", "curator", "author"
   role        String?
   year        Int
   /// Set for multi-year items such as residencies or long-running shows
   endYear     Int?
-  venue       String?
+  venue       String? @db.VarChar(200)
   city        String?
   country     String?
-  description String?
-  url         String?
+  description String? @db.Text
+  url         String? @db.VarChar(500)
 
   /// draft | in_review | published | rejected
   status String @default("in_review")
@@ -60,13 +60,13 @@ model ArchiveEntry {
   /// 0..1 model confidence for the extracted record
   confidence Float?
   /// Verbatim CV line the record came from, kept for provenance
-  sourceText String?
+  sourceText String? @db.Text
   /// Which extractor produced it: mock | openai | openrouter | manual
   extractedBy String?
 
   reviewedBy   String?
   reviewedAt   DateTime?
-  reviewNote   String?
+  reviewNote   String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

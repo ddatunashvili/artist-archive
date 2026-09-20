@@ -5,8 +5,9 @@ services:
     ports:
       - "3000:3000"
     # Secrets and connection strings come from .env, never from this file.
+    # Which local env file to load: ENV_FILE=.env.prod docker compose up
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}
     environment:
       # Keep the SQLite demo file on a volume so records survive rebuilds.
       DATABASE_PROVIDER: ${DATABASE_PROVIDER:-sqlite}
