@@ -21,9 +21,9 @@
   --flag: #7d6520;
   --warn: #8a3020;
 
-  /* Full-bleed, with a ceiling so a 4K display does not stretch a four-column
-     table across two feet of glass. */
-  --max: 2400px;
+  /* Edge-to-edge. Only the gutter holds content off the viewport edge;
+     individual prose blocks cap their own measure instead. */
+  --max: none;
   --gutter: clamp(20px, 3.6vw, 76px);
 
   /* fluid type scale */
@@ -239,6 +239,38 @@ p {
   border-bottom: 1px solid var(--ink);
   padding-bottom: clamp(18px, 2vw, 34px);
   margin-bottom: clamp(20px, 2.2vw, 38px);
+}
+
+/* Archivist shortcuts on the catalogue. Present only when signed in, so the
+   public page keeps its single job. */
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1vw, 16px);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: clamp(16px, 1.6vw, 26px);
+  margin-bottom: clamp(16px, 1.6vw, 26px);
+}
+
+.quick-actions .who {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: auto;
+}
+
+.signin-hint {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: clamp(14px, 1.4vw, 22px);
+  margin: 0 0 clamp(16px, 1.6vw, 26px);
 }
 
 /* ---------- filters ---------- */

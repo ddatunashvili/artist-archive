@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { EntryTable } from "@/components/EntryTable";
 import { Filters } from "@/components/Filters";
+import { QuickActions } from "@/components/QuickActions";
 import { findEntries, getArchiveStats, getFilterOptions, normaliseFilters } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,8 @@ export default async function CataloguePage({ searchParams }: { searchParams: Se
           or location; every record keeps the CV line it came from.
         </p>
       </div>
+
+      <QuickActions pending={stats.pending} />
 
       <Filters options={options} active={filters} />
 
