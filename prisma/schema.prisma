@@ -1,0 +1,80 @@
+// Artist Archive data model.
+//
+// The datasource provider below is swapped by `npm run db:provider`, which
+// reads DATABASE_PROVIDER from .env. Default is sqlite for the local demo;
+// postgresql / mysql / sqlserver work without any model changes.
+// Connection details always come from DATABASE_URL - never hardcode them.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // managed by scripts/set-db-provider.mjs
+  url      = env("DATABASE_URL")
+}
+
+model Artist {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  birthYear   Int?
+  deathYear   Int?
+  nationality String?
+  basedIn     String?
+  website     String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  entries ArchiveEntry[]
+
+  @@index([name])
+}
+
+/// One line of a CV: an exhibition, a publication, an award, etc.
+/// Enum-like columns are plain strings so the schema is portable across
+/// SQLite and server databases; values are validated with Zod in the app.
+model ArchiveEntry {
+  id       String @id @default(cuid())
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  /// exhibition | publication | award | residency | education | collection | screening | talk | performance | other
+  type        String
+  title       String
+  /// Artist's role, e.g. "solo", "group", "curator", "author"
+  role        String?
+  year        Int
+  /// Set for multi-year items such as residencies or long-running shows
+  endYear     Int?
+  venue       String?
+  city        String?
+  country     String?
+  description String?
+  url         String?
+
+  /// draft | in_review | published | rejected
+  status String @default("in_review")
+
+  /// 0..1 model confidence for the extracted record
+  confidence Float?
+  /// Verbatim CV line the record came from, kept for provenance
+  sourceText String?
+  /// Which extractor produced it: mock | openai | openrouter | manual
+  extractedBy String?
+
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([artistId])
+  @@index([status])
+  @@index([type])
+  @@index([year])
+  @@index([country])
+  @@index([city])
+}
