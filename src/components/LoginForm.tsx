@@ -4,31 +4,43 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+export type DemoOption = {
+  email: string;
+  password: string;
+  label: string;
+  blurb: string;
+};
+
 /**
  * Sign-in.
  *
- * When the published demo account is enabled the fields arrive pre-filled, so
- * a reviewer reaches the archive in one click. The prefill is driven by the
- * server: configure real credentials and it disappears on its own.
+ * The published demo accounts are offered as buttons rather than a single
+ * pre-filled pair, because the two roles behave differently and which one you
+ * pick decides what you are allowed to do. The first is filled in on load so
+ * the one-click path still exists.
  */
 export function LoginForm({
-  demo,
-  demoEmail,
-  demoPassword,
+  demos,
   canRegister,
   next,
 }: {
-  demo: boolean;
-  demoEmail: string;
-  demoPassword: string;
+  demos: DemoOption[];
   canRegister: boolean;
   next: string;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState(demo ? demoEmail : "");
-  const [password, setPassword] = useState(demo ? demoPassword : "");
+  const [email, setEmail] = useState(demos[0]?.email ?? "");
+  const [password, setPassword] = useState(demos[0]?.password ?? "");
+  const [picked, setPicked] = useState(demos[0]?.label ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function use(demo: DemoOption) {
+    setEmail(demo.email);
+    setPassword(demo.password);
+    setPicked(demo.label);
+    setError(null);
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -59,13 +71,24 @@ export function LoginForm({
       <h1>Sign in</h1>
       <p className="lede">Continue to the archivist tools.</p>
 
-      {demo && (
-        <div className="demo-creds">
-          Demo account, pre-filled — press sign in
-          <br />
-          {demoEmail}
-          <br />
-          {demoPassword}
+      {demos.length > 0 && (
+        <div className="demo-picker">
+          <span className="demo-picker-head">Try it — pick a role</span>
+          <div className="demo-options">
+            {demos.map((demo) => (
+              <button
+                key={demo.email}
+                type="button"
+                className={`demo-option${picked === demo.label ? " on" : ""}`}
+                onClick={() => use(demo)}
+                disabled={busy}
+              >
+                <strong>{demo.label}</strong>
+                <span>{demo.blurb}</span>
+                <code>{demo.email}</code>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -83,7 +106,10 @@ export function LoginForm({
             type="email"
             autoComplete="username"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setPicked("");
+            }}
             required
           />
         </div>
@@ -95,13 +121,16 @@ export function LoginForm({
             type="password"
             autoComplete="current-password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setPicked("");
+            }}
             required
           />
         </div>
 
         <button type="submit" disabled={busy} style={{ width: "100%" }}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? "Signing in…" : picked ? `Sign in as ${picked.toLowerCase()}` : "Sign in"}
         </button>
       </form>
 

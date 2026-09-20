@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthPanel } from "@/components/AuthPanel";
 import { LoginForm } from "@/components/LoginForm";
-import { demoAccount, registrationOpen } from "@/lib/auth";
+import { demoAccounts, registrationOpen } from "@/lib/auth";
 import { getSession, safeNext } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -20,20 +20,19 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   // Already signed in: no reason to show the form again.
   if (await getSession()) redirect(next);
 
-  // Only the demo pair is ever pre-filled; owner credentials never are.
-  const demo = demoAccount();
+  // Only the demo pairs are ever offered; owner credentials never are.
+  const demos = demoAccounts().map((account) => ({
+    email: account.email,
+    password: account.password,
+    label: account.label,
+    blurb: account.blurb,
+  }));
 
   return (
     <div className="auth">
       <AuthPanel />
       <section className="auth-form">
-        <LoginForm
-          demo={demo.enabled}
-          demoEmail={demo.enabled ? demo.email : ""}
-          demoPassword={demo.enabled ? demo.password : ""}
-          canRegister={registrationOpen()}
-          next={next}
-        />
+        <LoginForm demos={demos} canRegister={registrationOpen()} next={next} />
       </section>
     </div>
   );

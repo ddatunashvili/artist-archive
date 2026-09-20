@@ -18,6 +18,7 @@ const LINKS = [
   { href: "/admin/artists", label: "Artists" },
   { href: "/admin/review", label: "Review" },
   { href: "/admin/import", label: "Import" },
+  { href: "/admin/profile", label: "Profile" },
 ];
 
 // Admin-only destinations, appended when the session allows them.

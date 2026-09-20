@@ -31,9 +31,30 @@ export type Session = {
   name?: string;
 };
 
-/** Published in the README. Testing only. */
-const DEMO_EMAIL = "demo@aeitos.com";
-const DEMO_PASSWORD = "aeitos-demo-2026";
+/**
+ * Published in the README. Testing only.
+ *
+ * Two of them, because the roles behave differently and a reviewer should be
+ * able to see both: the editor account cannot delete an artist or touch
+ * accounts, and meeting that refusal is part of understanding the model.
+ */
+export const DEMO_ACCOUNTS = [
+  {
+    email: "demo@aeitos.com",
+    password: "aeitos-demo-2026",
+    role: "editor" as const,
+    label: "Editor",
+    blurb: "Import, review, publish and edit records.",
+  },
+  {
+    email: "demo-admin@aeitos.com",
+    password: "aeitos-admin-2026",
+    role: "admin" as const,
+    label: "Admin",
+    blurb: "Everything an editor can do, plus deleting artists and managing accounts.",
+  },
+];
+
 const DEV_SECRET = "aeitos-prototype-development-secret-change-me";
 
 function value(name: string): string {
@@ -50,15 +71,16 @@ export function ownerAccount(): { email: string; password: string } | null {
 }
 
 /**
- * The published demo account. On by default unless DEMO_ADMIN="false", so the
- * prototype is testable by anyone who opens it.
+ * The published demo accounts that are currently usable.
+ *
+ * DEMO_ADMIN="false" switches both off. DEMO_ADMIN_ROLE="false" keeps the
+ * editor one and drops the admin one — the useful middle setting for a link
+ * shared widely, since an admin demo can delete an artist and its records.
  */
-export function demoAccount(): { enabled: boolean; email: string; password: string } {
-  return {
-    enabled: value("DEMO_ADMIN").toLowerCase() !== "false",
-    email: DEMO_EMAIL,
-    password: DEMO_PASSWORD,
-  };
+export function demoAccounts() {
+  if (value("DEMO_ADMIN").toLowerCase() === "false") return [];
+  const adminAllowed = value("DEMO_ADMIN_ROLE").toLowerCase() !== "false";
+  return DEMO_ACCOUNTS.filter((account) => adminAllowed || account.role !== "admin");
 }
 
 /** Cookie options shared by sign-in and registration. */
@@ -75,7 +97,8 @@ export function sessionCookie(token: string) {
 }
 
 export function isDemoAccount(email: string): boolean {
-  return email.trim().toLowerCase() === DEMO_EMAIL.toLowerCase();
+  const target = email.trim().toLowerCase();
+  return DEMO_ACCOUNTS.some((account) => account.email.toLowerCase() === target);
 }
 
 /** Registration can be closed without redeploying. */
@@ -169,8 +192,9 @@ export function checkEnvCredentials(email: string, password: string): Session | 
   const owner = ownerAccount();
   if (owner) candidates.push({ ...owner, role: "admin" });
 
-  const demo = demoAccount();
-  if (demo.enabled) candidates.push({ email: demo.email, password: demo.password, role: "editor" });
+  for (const demo of demoAccounts()) {
+    candidates.push({ email: demo.email, password: demo.password, role: demo.role });
+  }
 
   let matched: Session | null = null;
   for (const candidate of candidates) {

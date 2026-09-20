@@ -64,6 +64,8 @@ list and the reasoning behind it.
 | `/admin/artists` | Artist CRUD |
 | `/admin/review` | Publish / reject queue |
 | `/admin/import` | Upload or paste a CV → AI extraction → human review → save |
+| `/admin/users` | Registered accounts and their roles — admin only |
+| `/admin/profile` | Your name, title, biography, picture and password |
 
 JSON API: `GET /api/entries` and `GET /api/entries/[id]` are public. Everything that writes —
 `POST /api/extract`, `POST /api/entries`, all of `/api/admin/*` — needs an admin session.
@@ -119,18 +121,23 @@ Set `SEED_ON_START=false` in `.env` to skip seeding entirely.
 
 ## Admin panel
 
-Anyone can try it. Two ways in at `/admin`:
+Anyone can try it. The sign-in form offers **both demo roles** — pick one and it fills the form:
 
 ```
-demo@aeitos.com
-aeitos-demo-2026
+demo@aeitos.com        aeitos-demo-2026     editor
+demo-admin@aeitos.com  aeitos-admin-2026    admin
 ```
 
-The sign-in form **pre-fills that account**, so it is one click. Or
-[register](https://archive.renode.space/admin/register) for your own — sign-up is open.
+Or [register](https://archive.renode.space/admin/register) for your own — sign-up is open, and new
+accounts are editors.
 
-Dashboard with analytics, full CRUD over records and artists, the review queue and CV import all
-live here. The public site is read-only.
+Dashboard with analytics, full CRUD over records and artists, the review queue, CV import and your
+profile all live here. The public site is read-only.
+
+Records edit in place: a status control on every row, checkboxes with a bulk bar for publishing,
+rejecting or deleting many at once, and a full form behind each one. Whoever is signed in is
+recorded as the reviewer — when a decision changes, the person making *that* decision is credited,
+not the one before them.
 
 ### Roles
 

@@ -8,19 +8,23 @@ Three kinds of account, all optional to each other:
 
 | Account | Source | Role | Pre-filled |
 | --- | --- | --- | --- |
-| demo | built in, `DEMO_ADMIN` | editor | yes |
+| demo editor | built in, `DEMO_ADMIN` | editor | yes, pre-filled |
+| demo admin | built in, `DEMO_ADMIN_ROLE` | admin | yes, one click |
 | owner | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | admin | never |
 | registered | `/admin/register` | editor | n/a |
 
 ```
 https://archive.renode.space/admin
-demo@aeitos.com
-aeitos-demo-2026
+demo@aeitos.com        aeitos-demo-2026
+demo-admin@aeitos.com  aeitos-admin-2026
 ```
 
-The form pre-fills the demo pair so a reviewer reaches the dashboard in one click, and registration
-is open so anyone can make their own account instead. Both are deliberate: this is a prototype that
-is meant to be tried.
+The form offers both demo roles because they behave differently, and meeting the editor refusal is
+part of understanding the model. Registration is open so anyone can make their own account instead.
+All of it is deliberate: this is a prototype meant to be tried.
+
+The admin demo can delete an artist and every record attached to them. `DEMO_ADMIN_ROLE="false"`
+keeps the editor demo and drops that one.
 
 The owner account exists so the archive can always be administered even if the user table is empty
 or the database is unreachable — it is checked without a query.
@@ -42,6 +46,29 @@ managing accounts.
 Every registration is an editor. Promotion is a deliberate act by an admin on `/admin/users`, so an
 open sign-up form can never hand a visitor the ability to empty the archive.
 
+## Editing records
+
+The record list edits in place rather than sending you to a form for every change:
+
+- a status control on each row, one request per change
+- checkboxes and a bulk bar — publish, reject, draft or delete a selection in one transaction
+- the full form behind each record for everything else
+
+The reviewer stored against a record is the signed-in account, filled in by the server. When the
+status changes, the person making that decision is credited; an edit that leaves the status alone
+keeps the previous reviewer, because they are the one who signed it off.
+
+## Profiles
+
+A registered account has a name, title, biography and picture, edited at `/admin/profile`. The name
+is what appears against records it publishes, and the picture shows in the masthead.
+
+Changing a password requires the current one — a session left open on a shared machine should not
+be enough to take the account over.
+
+The owner and demo accounts are configuration rather than rows, so they have no profile; the page
+says so instead of failing.
+
 ## Passwords
 
 PBKDF2-SHA256, 210,000 iterations, a 16-byte random salt per user, stored self-describing as
@@ -61,7 +88,8 @@ existing hashes. bcrypt and argon2 are native modules and the deployment host on
 | `/admin/artists/new`, `/admin/artists/[id]` | Create and edit artists |
 | `/admin/review` | The review queue: publish or reject, with a reviewer name |
 | `/admin/import` | Paste a CV, extract, review, save |
-| `/admin/users` | Registered accounts and their roles — admin only |
+| `/admin/users` | Registered accounts, with a role control — admin only |
+| `/admin/profile` | Name, title, biography, picture and password for the signed-in account |
 
 ## Analytics
 

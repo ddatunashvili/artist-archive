@@ -49,6 +49,9 @@ const MYSQL_NATIVE_TYPES = {
   "User.email": "@db.VarChar(200)",
   "User.name": "@db.VarChar(120)",
   "User.passwordHash": "@db.VarChar(255)",
+  "User.title": "@db.VarChar(120)",
+  "User.bio": "@db.Text",
+  "User.avatarUrl": "@db.VarChar(600)",
 };
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");

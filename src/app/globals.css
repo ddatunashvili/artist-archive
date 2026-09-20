@@ -1605,3 +1605,311 @@ table.catalogue tr.picked td {
   border-color: var(--flag);
   color: var(--flag);
 }
+
+/* ---------- demo role picker ---------- */
+
+.demo-picker {
+  border: 1px dashed var(--rule-strong);
+  padding: clamp(12px, 1.2vw, 18px);
+  margin-bottom: clamp(18px, 2vw, 28px);
+}
+
+.demo-picker-head {
+  display: block;
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.demo-options {
+  display: grid;
+  gap: 8px;
+}
+
+.demo-option {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  padding: 10px 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--serif);
+  font-size: var(--t-meta);
+  cursor: pointer;
+}
+
+.demo-option:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: transparent;
+  color: var(--ink);
+  opacity: 1;
+}
+
+/* The role currently loaded into the form. */
+.demo-option.on {
+  border-color: var(--ink);
+  background: var(--paper-3);
+}
+
+.demo-option strong {
+  font-weight: 400;
+  font-size: var(--t-title);
+  line-height: 1.1;
+}
+
+.demo-option span {
+  color: var(--muted);
+}
+
+.demo-option code {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- avatars ---------- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper-3);
+  border: 1px solid var(--rule-strong);
+  flex: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-initial {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.avatar.lg {
+  width: clamp(64px, 7vw, 96px);
+  height: clamp(64px, 7vw, 96px);
+}
+
+.avatar.lg .avatar-initial {
+  font-size: clamp(22px, 2.4vw, 32px);
+}
+
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.6vw, 26px);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: clamp(16px, 1.8vw, 26px);
+}
+
+/* ---------- navigation: signed-in identity ---------- */
+
+.nav-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid transparent;
+  max-width: 26ch;
+}
+
+.nav-who:hover {
+  border-bottom-color: var(--ink);
+}
+
+.nav-name {
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-who:hover .nav-name {
+  color: var(--ink);
+}
+
+/* The menu button only exists on small screens. */
+.nav-toggle {
+  display: none;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 860px) {
+  .site-header .row {
+    align-items: center;
+  }
+
+  .nav-toggle {
+    display: inline-block;
+    align-self: center;
+  }
+
+  /* Collapsed by default; the button reveals it as a stacked panel. */
+  .main-nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    border-top: 1px solid var(--rule);
+    margin-top: 14px;
+    padding-top: 16px;
+  }
+
+  .main-nav.open {
+    display: flex;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    font-size: var(--t-lede);
+  }
+
+  .nav-links li + li {
+    border-top: 1px solid var(--rule);
+  }
+
+  .nav-links a {
+    display: block;
+    padding: 12px 0;
+    border-bottom: none;
+  }
+
+  .nav-links a[aria-current="page"] {
+    border-bottom: none;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .nav-divide {
+    display: none;
+  }
+
+  .nav-auth {
+    display: grid;
+    gap: 8px;
+  }
+
+  .nav-auth .button,
+  .nav-auth button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-who {
+    max-width: none;
+    padding: 6px 0;
+  }
+
+  /* Admin toolbar: let the links wrap rather than overflow. */
+  .admin-bar .row {
+    align-items: flex-start;
+  }
+
+  .admin-bar nav {
+    gap: 12px 16px;
+  }
+}
+
+@media (max-width: 680px) {
+  /* Every admin table drops to its essentials. */
+  td.c-venue,
+  th.c-venue,
+  td.c-city,
+  th.c-city,
+  td.c-country,
+  th.c-country,
+  td.c-artist,
+  th.c-artist {
+    display: none;
+  }
+
+  .bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bulk-bar .actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .bulk-bar .actions button {
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar .button {
+    text-align: center;
+  }
+
+  /* Forms go single column rather than squeezing two. */
+  .review-card .grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .detail-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-head {
+    gap: 12px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .entry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-bar .actions {
+    grid-template-columns: 1fr;
+  }
+}

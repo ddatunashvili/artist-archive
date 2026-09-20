@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MainNav } from "@/components/MainNav";
 import { registrationOpen } from "@/lib/auth";
 import { getSession } from "@/lib/session";
+import { findUserByEmail } from "@/lib/users";
 import { absoluteUrl, jsonLd, site } from "@/lib/site";
 import "./globals.css";
 
@@ -79,6 +80,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Read once here rather than in every page: the masthead needs to know who
   // is signed in, and the cookie is httpOnly so the browser cannot tell.
   const session = await getSession();
+  // The avatar is not in the session cookie: keeping it out means changing a
+  // picture takes effect immediately rather than on next sign-in.
+  const profile = session ? await findUserByEmail(session.email).catch(() => null) : null;
 
   return (
     <html lang="en">
@@ -109,7 +113,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <MainNav
                 session={
                   session
-                    ? { email: session.email, role: session.role, name: session.name }
+                    ? {
+                        email: session.email,
+                        role: session.role,
+                        name: profile?.name ?? session.name,
+                        avatarUrl: profile?.avatarUrl ?? null,
+                      }
                     : null
                 }
                 canRegister={registrationOpen()}
@@ -128,7 +137,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/artists">Artists</Link>
             <Link href="/about">About</Link>
             {session ? (
-              <Link href="/admin">Admin</Link>
+              <>
+                <Link href="/admin">Admin</Link>
+                <Link href="/admin/profile">Profile</Link>
+              </>
             ) : (
               <>
                 <Link href="/admin/login">Sign in</Link>

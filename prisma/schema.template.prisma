@@ -119,6 +119,11 @@ model User {
   passwordHash String
   /// admin | editor
   role         String    @default("editor")
+
+  /// Profile, shown next to the records this account signs off.
+  title     String?
+  bio       String?
+  avatarUrl String?
   createdAt    DateTime  @default(now())
   lastLoginAt  DateTime?
 
