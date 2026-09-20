@@ -40,6 +40,38 @@ of `.env`.
 
 Put a TLS-terminating reverse proxy in front of port 3000 for `archive.renode.space`.
 
+## Deploying on the RE:NODE panel
+
+The panel fetches the repository into `/home/container`, runs `npm install`, then `npm run start`.
+It never runs a build, so `npm start` is `node scripts/start.mjs`, which:
+
+1. binds `SERVER_PORT` (falling back to `PORT`, then 3000) — hardcoding 3000 would leave the app
+   unreachable from outside the container;
+2. regenerates `prisma/schema.prisma` and the Prisma client for the configured provider;
+3. builds once if `.next/` is absent, because that directory is git-ignored and a fresh fetch has
+   no build;
+4. refuses to start, with a readable message, when `DATABASE_URL` is missing.
+
+### The .env file
+
+A `.env` is **not** in the repository and is not copied by the fetch. Upload `.env.prod` as `.env`
+to `/home/container` through the Files tab. The fetch only overwrites files that also exist in the
+repository, so `.env` survives restarts — but keep a local copy.
+
+Do not put `SERVER_PORT` in it. The panel supplies it.
+
+### Why the build happens at start
+
+`@prisma/client` runs its own postinstall while dependencies are still installing — before this
+project's `postinstall` has written `prisma/schema.prisma` from the template. The client produced
+at that moment cannot be trusted, so `scripts/start.mjs` runs `db:generate` before serving.
+
+### Pushing deploys
+
+A push to `master` restarts the server within seconds on the new commit, and starts it if it was
+stopped. The first boot after a push rebuilds, which takes about a minute; later restarts reuse
+`.next`.
+
 ## Migrations
 
 The committed migration in `prisma/migrations/` is **MySQL SQL**, matching

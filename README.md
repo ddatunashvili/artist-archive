@@ -123,11 +123,14 @@ Values live in `.env.prod`, which is git-ignored and excluded from the Docker bu
 
 ```bash
 npm run db:deploy         # apply migrations to the MySQL database
-npm run build
-npm run start:prod        # node --env-file=.env.prod
+npm run start:prod        # builds if needed, then serves with .env.prod
 ```
 
 Or: `docker compose --env-file .env.prod up --build`.
+
+On a hosting panel that only runs `npm install && npm start`, nothing else is needed: `npm start`
+binds the port the host allocates (`SERVER_PORT`, then `PORT`), reconciles the Prisma client with
+`DATABASE_PROVIDER`, and builds once if `.next/` is missing.
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the migration workflow, the MySQL column types
 and the go-live checklist.
@@ -208,13 +211,14 @@ is shared, and read the limits in [`docs/ADMIN.md`](docs/ADMIN.md).
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm run build` / `npm start` | Production build and server |
+| `npm run build` | Production build |
 | `npm run setup` | generate + db push + seed, in one go |
 | `npm run db:seed` | Re-seed the sample archive (idempotent) |
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:provider` | Apply `DATABASE_PROVIDER` to the Prisma schema |
 | `npm run db:deploy` | Provider + generate + `migrate deploy` (servers) |
-| `npm run start:prod` | Production server using `.env.prod` |
+| `npm start` | Production server: binds SERVER_PORT/PORT, builds if needed |
+| `npm run start:prod` | Same, loading `.env.prod` |
 | `npm run typecheck` | `tsc --noEmit` |
 
 ---

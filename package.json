@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "node scripts/start.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:provider": "node scripts/set-db-provider.mjs",
@@ -19,11 +19,12 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "setup": "node scripts/set-db-provider.mjs && prisma generate && prisma db push && prisma db seed",
-    "start:prod": "node --env-file=.env.prod scripts/set-db-provider.mjs && node --env-file=.env.prod ./node_modules/prisma/build/index.js generate && node --env-file=.env.prod ./node_modules/next/dist/bin/next start",
+    "start:prod": "node --env-file=.env.prod scripts/start.mjs",
     "db:deploy": "node scripts/set-db-provider.mjs && prisma generate && prisma migrate deploy",
     "postinstall": "node scripts/set-db-provider.mjs",
     "predev": "node scripts/set-db-provider.mjs",
-    "prebuild": "node scripts/set-db-provider.mjs"
+    "prebuild": "node scripts/set-db-provider.mjs",
+    "start:next": "next start"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
