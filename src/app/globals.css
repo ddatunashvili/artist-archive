@@ -1537,3 +1537,71 @@ blockquote.source {
   grid-column: 2;
   margin-top: 0;
 }
+
+/* ---------- admin bulk editing ---------- */
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 1.4vw, 24px);
+  flex-wrap: wrap;
+  border: 1px solid var(--rule);
+  padding: clamp(10px, 1vw, 16px) clamp(12px, 1.2vw, 20px);
+  margin-bottom: 14px;
+  background: var(--paper-2);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+/* Only reads as active once something is selected. */
+.bulk-bar.on {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+th.tick,
+td.tick {
+  width: 34px;
+  padding-right: 8px;
+}
+
+th.tick input,
+td.tick input {
+  min-width: 0;
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+table.catalogue tr.picked td {
+  background: var(--paper-3);
+}
+
+/* A select that carries the colour of the status it holds. */
+.status-pick {
+  min-width: 0;
+  width: auto;
+  font-family: var(--mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  border-color: var(--rule-strong);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.status-pick.ok {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.status-pick.warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.status-pick.flag {
+  border-color: var(--flag);
+  color: var(--flag);
+}

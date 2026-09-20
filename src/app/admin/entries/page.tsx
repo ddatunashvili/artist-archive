@@ -1,26 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DeleteButton } from "@/components/DeleteButton";
-import { formatPlace, formatYears } from "@/components/EntryTable";
+import { AdminEntriesTable, type AdminRow } from "@/components/AdminEntriesTable";
 import { findAdminEntries, normaliseFilters } from "@/lib/queries";
-import {
-  ENTRY_STATUSES,
-  ENTRY_STATUS_LABELS,
-  ENTRY_TYPE_LABELS,
-  type EntryStatus,
-  type EntryType,
-} from "@/lib/schema";
+import { ENTRY_STATUSES, ENTRY_STATUS_LABELS, type EntryStatus } from "@/lib/schema";
 
 export const metadata: Metadata = { title: "Records" };
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-function statusClass(status: string): string {
-  if (status === "published") return "ok";
-  if (status === "rejected") return "warn";
-  return "flag";
-}
 
 export default async function AdminEntriesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -85,47 +72,22 @@ export default async function AdminEntriesPage({ searchParams }: { searchParams:
         {entries.length} {entries.length === 1 ? "record" : "records"}
       </p>
 
-      {entries.length === 0 ? (
-        <p className="empty">No records match.</p>
-      ) : (
-        <table className="catalogue">
-          <thead>
-            <tr>
-              <th>Year</th>
-              <th>Title / Artist</th>
-              <th className="type">Type</th>
-              <th className="place">Place</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.id}>
-                <td className="year">{formatYears(entry.year, entry.endYear)}</td>
-                <td className="title">
-                  <Link href={`/admin/entries/${entry.id}`}>{entry.title}</Link>
-                  <div className="sub">{entry.artist.name}</div>
-                </td>
-                <td className="type">
-                  <span className="tag">
-                    {ENTRY_TYPE_LABELS[entry.type as EntryType] ?? entry.type}
-                  </span>
-                </td>
-                <td className="place">{formatPlace(entry) || "—"}</td>
-                <td className="actions-cell">
-                  <span className={`tag ${statusClass(entry.status)}`}>
-                    {ENTRY_STATUS_LABELS[entry.status as EntryStatus] ?? entry.status}
-                  </span>
-                </td>
-                <td className="actions-cell">
-                  <DeleteButton endpoint={`/api/admin/entries/${entry.id}`} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <AdminEntriesTable
+        rows={entries.map(
+          (entry): AdminRow => ({
+            id: entry.id,
+            title: entry.title,
+            type: entry.type,
+            year: entry.year,
+            endYear: entry.endYear,
+            venue: entry.venue,
+            city: entry.city,
+            country: entry.country,
+            status: entry.status,
+            artistName: entry.artist.name,
+          }),
+        )}
+      />
     </>
   );
 }

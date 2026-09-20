@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DeleteButton } from "@/components/DeleteButton";
+import { UserRoleSelect } from "@/components/UserRoleSelect";
 import { getSession } from "@/lib/session";
 import { listUsers } from "@/lib/users";
 
@@ -50,8 +51,14 @@ export default async function UsersPage() {
                   <span className="t">{user.email}</span>
                 </td>
                 <td className="c-artist">{user.name ?? "—"}</td>
-                <td className="type">
-                  <span className={`tag ${user.role === "admin" ? "ok" : ""}`}>{user.role}</span>
+                <td className="actions-cell">
+                  {/* Demoting yourself mid-session would lock you out of this
+                      page, so your own row is fixed. */}
+                  <UserRoleSelect
+                    id={user.id}
+                    role={user.role}
+                    disabled={user.email === session.email}
+                  />
                 </td>
                 <td className="c-venue">{user.createdAt.toISOString().slice(0, 10)}</td>
                 <td className="c-city">

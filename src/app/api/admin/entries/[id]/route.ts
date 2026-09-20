@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { AdminEntryPatchSchema, fieldErrors } from "@/lib/schema";
+import { getSession } from "@/lib/session";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -28,7 +29,20 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const { status, reviewedBy, images, ...fields } = parsed.data;
 
-  if (status === "published" && !(reviewedBy ?? existing.reviewedBy)) {
+  // Publishing needs a reviewer, and the signed-in account is one: a status
+  // can be changed from a list without retyping a name the session knows.
+  //
+  // When the decision itself changes, the person making it is recorded —
+  // keeping the previous reviewer would credit someone else's sign-off. An
+  // edit that leaves the status alone keeps the existing name.
+  const session = await getSession();
+  const decider = session?.name || session?.email || null;
+  const changingStatus = status !== undefined && status !== existing.status;
+  const reviewer = changingStatus
+    ? (reviewedBy ?? decider ?? existing.reviewedBy)
+    : (reviewedBy ?? existing.reviewedBy ?? decider);
+
+  if (status === "published" && !reviewer) {
     return NextResponse.json({ error: "Publishing requires a reviewer name." }, { status: 400 });
   }
 
@@ -44,7 +58,7 @@ export async function PATCH(request: Request, { params }: Context) {
       data: {
         ...fields,
         ...(status !== undefined ? { status } : {}),
-        ...(reviewedBy !== undefined ? { reviewedBy } : {}),
+        ...(status !== undefined || reviewedBy !== undefined ? { reviewedBy: reviewer } : {}),
         ...(becomesReviewed ? { reviewedAt: new Date() } : {}),
       },
     });
