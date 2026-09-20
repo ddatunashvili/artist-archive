@@ -1510,3 +1510,30 @@ blockquote.source {
   border-bottom-color: var(--ink);
   color: var(--ink);
 }
+
+.ocr-toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-items: center;
+  text-align: left;
+  max-width: 56ch;
+  margin-top: 6px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: var(--t-meta);
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  cursor: pointer;
+}
+
+.ocr-toggle input {
+  min-width: 0;
+  width: auto;
+  margin: 0;
+}
+
+.ocr-toggle .hint {
+  grid-column: 2;
+  margin-top: 0;
+}

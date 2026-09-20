@@ -34,10 +34,13 @@ export async function POST(request: Request) {
     );
   }
 
+  // Opt in to reading a PDF by recognition instead of its text layer.
+  const forceOcr = String(form.get("ocr") ?? "") === "true";
+
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    const result = await readCvFile(buffer, file.name, file.type || "");
+    const result = await readCvFile(buffer, file.name, file.type || "", { forceOcr });
     const text = tidyExtractedText(result.text);
 
     if (!text) {

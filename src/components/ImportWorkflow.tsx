@@ -86,6 +86,7 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
   const [fileNote, setFileNote] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [forceOcr, setForceOcr] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [reviewer, setReviewer] = useState("");
   const [reviewNote, setReviewNote] = useState("");
@@ -116,6 +117,7 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
     try {
       const body = new FormData();
       body.append("file", file);
+      if (forceOcr) body.append("ocr", "true");
 
       const response = await fetch("/api/extract/upload", { method: "POST", body });
       const payload = await response.json().catch(() => ({}));
@@ -340,6 +342,20 @@ export function ImportWorkflow({ provider }: { provider: { provider: string; mod
               </button>
               . Nothing is stored; only the text is kept.
             </span>
+
+            <label className="ocr-toggle">
+              <input
+                type="checkbox"
+                checked={forceOcr}
+                onChange={(event) => setForceOcr(event.target.checked)}
+                disabled={reading || busy}
+              />
+              Read the page as an image
+              <span className="hint">
+                Scans are always read this way. Tick it for a PDF whose text comes out garbled —
+                slower, and it reads what is printed rather than what is embedded.
+              </span>
+            </label>
           </div>
 
           {fileNote && <div className="notice ok">{fileNote}</div>}

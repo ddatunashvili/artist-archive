@@ -157,19 +157,24 @@ of them by drag-and-drop:
 | Input | Reader |
 | --- | --- |
 | `.txt`, `.md` | read directly |
-| `.pdf` | `unpdf` (pdf.js) text layer |
+| `.pdf` with a text layer | `unpdf` (pdf.js) |
+| `.pdf` of scans | pages rendered with `@napi-rs/canvas`, then read by `tesseract.js` |
 | `.docx` | `mammoth` |
-| `.png`, `.jpg`, `.webp` | `tesseract.js` OCR |
+| `.png`, `.jpg`, `.webp` | `tesseract.js` |
 
-Every reader is pure JavaScript or WASM — a native module would need a compiler on the host, and
-the deployment only runs `npm install && npm start`.
+Every reader is pure JavaScript, WASM, or ships prebuilt binaries — a module needing a compiler
+would not install on the host, which only runs `npm install && npm start`.
 
 The file is never written to disk. Its text lands in the textarea first, so you can see exactly what
 was read before a model is asked to interpret it — which matters most with OCR, where a bad scan is
 obvious in the text long before it is obvious in the records.
 
-A scanned PDF has no text layer and rendering its pages would need a native canvas, so the app says
-so and asks for a page as an image instead, rather than half-working.
+A PDF with a usable text layer is read from it, because that is exact. A PDF of scans has none, so
+its pages are rendered and recognised instead — and a checkbox forces that path for a PDF whose
+embedded text comes out garbled. Recognition is capped at 15 pages, roughly a second each.
+
+After the text is out, the AI step is the same whatever the file was: text in, structured records
+out, checked by a person before anything is stored.
 
 ## SEO
 

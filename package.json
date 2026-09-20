@@ -30,6 +30,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.9",
     "@prisma/client": "^6.1.0",
     "mammoth": "^1.12.3",
     "next": "^15.1.0",
