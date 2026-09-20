@@ -11,12 +11,10 @@ if [ -z "${DATABASE_URL}" ]; then
   exit 1
 fi
 
-# Point the schema at the configured engine, then refresh the client if the
-# provider is anything other than the SQLite default baked in at build time.
-if [ "${PROVIDER}" != "sqlite" ]; then
-  node scripts/set-db-provider.mjs
-  npx prisma generate
-fi
+# prisma/schema.prisma is generated, never shipped. Build it from the template
+# for the configured engine, then refresh the client to match.
+node scripts/set-db-provider.mjs
+npx prisma generate
 
 echo "> applying schema to ${PROVIDER} database"
 npx prisma db push --skip-generate

@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 /**
- * Applies DATABASE_PROVIDER to prisma/schema.prisma.
+ * Generates prisma/schema.prisma from prisma/schema.template.prisma.
+ *
+ * Prisma requires a literal datasource provider, so a project that targets
+ * both the SQLite demo and a MySQL server has to rewrite its schema. Doing
+ * that to a tracked file means `git status` is dirty whenever anyone runs the
+ * app locally, so the template is tracked and the schema is generated and
+ * git-ignored instead.
  *
  * Two jobs:
  *
- * 1. Rewrite the `provider` line. Prisma requires a literal there, so moving
- *    from the local SQLite demo to a server database is a patch, not a second
- *    schema file. Connection details stay in DATABASE_URL.
+ * 1. Set the `provider` from DATABASE_PROVIDER. Connection details stay in
+ *    DATABASE_URL and are never read here.
  *
- * 2. Add or remove MySQL column types. MySQL maps a Prisma `String` to
+ * 2. Add provider-specific column types. MySQL maps a Prisma `String` to
  *    VARCHAR(191), which is shorter than several limits in the Zod contract
  *    (a 3000-character bio, a 2000-character description). Without this the
  *    first long CV entry fails on insert. SQLite and PostgreSQL both store
@@ -41,6 +46,7 @@ const MYSQL_NATIVE_TYPES = {
 };
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const templatePath = resolve(root, "prisma/schema.template.prisma");
 const schemaPath = resolve(root, "prisma/schema.prisma");
 
 /** Minimal .env reader: no dependency, and it never prints values. */
@@ -101,8 +107,17 @@ if (!SUPPORTED.includes(provider)) {
   process.exit(1);
 }
 
-const original = readFileSync(schemaPath, "utf8");
-let schema = stripNativeTypes(setProvider(original, provider));
+let template;
+try {
+  template = readFileSync(templatePath, "utf8");
+} catch {
+  console.error(
+    "prisma/schema.template.prisma is missing. It is the source of truth for the data model.",
+  );
+  process.exit(1);
+}
+
+let schema = stripNativeTypes(setProvider(template, provider));
 
 if (provider === "mysql") {
   schema = applyNativeTypes(schema, MYSQL_NATIVE_TYPES);
@@ -114,13 +129,25 @@ if (provider === "sqlserver") {
   );
 }
 
-if (schema === original) {
-  console.log(`prisma/schema.prisma already set up for "${provider}".`);
+const banner = `// GENERATED FILE - do not edit and do not commit.\n// Source: prisma/schema.template.prisma\n// Written by scripts/set-db-provider.mjs for DATABASE_PROVIDER="${provider}".\n\n`;
+const output = banner + schema;
+
+// Rewriting an identical file would churn the mtime and make Prisma and the
+// Next.js dev server re-read it for nothing.
+let current = null;
+try {
+  current = readFileSync(schemaPath, "utf8");
+} catch {
+  // not generated yet
+}
+
+if (current === output) {
+  console.log(`prisma/schema.prisma already generated for "${provider}".`);
 } else {
-  writeFileSync(schemaPath, schema);
-  console.log(`prisma/schema.prisma provider set to "${provider}".`);
-  if (provider === "mysql") {
-    console.log(`applied ${Object.keys(MYSQL_NATIVE_TYPES).length} MySQL column types.`);
-  }
-  console.log("Next: npm run db:generate && npm run db:migrate");
+  writeFileSync(schemaPath, output);
+  const detail =
+    provider === "mysql"
+      ? ` with ${Object.keys(MYSQL_NATIVE_TYPES).length} MySQL column types`
+      : "";
+  console.log(`prisma/schema.prisma generated for "${provider}"${detail}.`);
 }

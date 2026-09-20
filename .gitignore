@@ -41,5 +41,8 @@ Thumbs.db
 coverage/
 .turbo/
 
+# generated from prisma/schema.template.prisma by scripts/set-db-provider.mjs
+prisma/schema.prisma
+
 # typescript build info
 *.tsbuildinfo

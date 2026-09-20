@@ -167,13 +167,15 @@ DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/artist_archive"
 then:
 
 ```bash
-npm run db:provider    # patches prisma/schema.prisma for that engine
-npm run db:generate
-npm run db:deploy      # servers: applies prisma/migrations
+npm run db:deploy      # regenerates the schema, then applies prisma/migrations
 ```
 
-`postgresql`, `mysql`, `sqlserver` and `cockroachdb` are supported. `npm run setup` runs
-`db:provider` first, so a fresh clone works on SQLite whatever the committed schema is set to.
+`postgresql`, `mysql`, `sqlserver` and `cockroachdb` are supported.
+
+The data model lives in `prisma/schema.template.prisma`. `prisma/schema.prisma` is **generated**
+from it for the configured provider and is git-ignored, so switching between the SQLite demo and a
+MySQL server never shows up as a modified file. Generation runs automatically on `postinstall`,
+`dev`, `build` and every `db:*` script — edit the template, never the generated file.
 
 Details, including the MySQL column types the script manages, are in
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
@@ -221,7 +223,8 @@ is shared, and read the limits in [`docs/ADMIN.md`](docs/ADMIN.md).
 
 ```
 prisma/
-  schema.prisma          Artist + ArchiveEntry models
+  schema.template.prisma Artist + ArchiveEntry models - edit this one
+  schema.prisma          Generated per provider, git-ignored
   migrations/            MySQL migrations, applied with db:deploy
   seed.ts                Demo archive: 15 artists, 124 records
 src/
@@ -242,7 +245,7 @@ src/
     site.ts              SEO and brand constants
     db.ts, env.ts        Prisma client, environment access
 scripts/
-  set-db-provider.mjs    Datasource + MySQL column types, from an env var
+  set-db-provider.mjs    Generates schema.prisma from the template
 docs/                    Architecture, review, database, AI, deployment, admin
 public/
   aeitos-logo.png        Brand wordmark

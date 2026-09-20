@@ -13,14 +13,17 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:provider": "node scripts/set-db-provider.mjs",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
+    "db:generate": "node scripts/set-db-provider.mjs && prisma generate",
+    "db:push": "node scripts/set-db-provider.mjs && prisma db push",
+    "db:migrate": "node scripts/set-db-provider.mjs && prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "setup": "node scripts/set-db-provider.mjs && prisma generate && prisma db push && prisma db seed",
-    "start:prod": "node --env-file=.env.prod ./node_modules/next/dist/bin/next start",
-    "db:deploy": "node scripts/set-db-provider.mjs && prisma generate && prisma migrate deploy"
+    "start:prod": "node --env-file=.env.prod scripts/set-db-provider.mjs && node --env-file=.env.prod ./node_modules/prisma/build/index.js generate && node --env-file=.env.prod ./node_modules/next/dist/bin/next start",
+    "db:deploy": "node scripts/set-db-provider.mjs && prisma generate && prisma migrate deploy",
+    "postinstall": "node scripts/set-db-provider.mjs",
+    "predev": "node scripts/set-db-provider.mjs",
+    "prebuild": "node scripts/set-db-provider.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

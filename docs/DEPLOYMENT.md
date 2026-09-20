@@ -53,6 +53,9 @@ npm run db:deploy      # set-db-provider + generate + migrate deploy
 resets data and never needs a shadow database — which matters here, because the hosting account
 cannot create the temporary database that `prisma migrate dev` requires.
 
+The data model is edited in `prisma/schema.template.prisma`; `prisma/schema.prisma` is generated
+from it per provider and is git-ignored.
+
 To add a migration later, generate the SQL offline and deploy it:
 
 ```bash

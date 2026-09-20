@@ -6,6 +6,9 @@ node_modules
 !README.md
 .env
 .env.*
+# generated in the container from schema.template.prisma
+prisma/schema.prisma
+
 *.db
 Dockerfile
 docker-compose.yml

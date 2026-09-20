@@ -51,6 +51,10 @@ what makes real CV text usable without the reviewer retyping it.
 **Filters in the URL.** The catalogue is a plain GET form. Every filtered view is linkable and
 citable, works without JavaScript, and needs no client state.
 
+**The schema is generated.** `prisma/schema.template.prisma` is tracked;
+`prisma/schema.prisma` is written from it for the configured provider and ignored. Prisma needs a
+literal provider, and a tracked file that every local run rewrites would make `git status` useless.
+
 **Strings instead of database enums.** `type` and `status` are `String` columns validated by Zod.
 SQLite has no enum type, and a migration that adds an entry type should not require a schema change
 on every supported engine.

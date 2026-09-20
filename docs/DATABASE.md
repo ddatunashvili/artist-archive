@@ -64,16 +64,23 @@ The models use no SQLite-specific features. To switch:
    DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/artist_archive?schema=public"
    ```
 
-2. Apply the provider to the schema and migrate:
+2. Regenerate the schema and apply the migrations:
 
    ```bash
-   npm run db:provider
-   npm run db:generate
-   npm run db:migrate
+   npm run db:deploy
    ```
 
-`scripts/set-db-provider.mjs` rewrites only the `provider` line of `prisma/schema.prisma`, because
-Prisma requires a literal there. Supported: `sqlite`, `postgresql`, `mysql`, `sqlserver`,
+## The generated schema
+
+`prisma/schema.template.prisma` is the source of truth and the file to edit.
+`prisma/schema.prisma` is generated from it by `scripts/set-db-provider.mjs` and is git-ignored.
+
+Prisma requires a literal datasource provider, so supporting both SQLite and MySQL means rewriting
+the schema. Doing that to a tracked file would leave `git status` dirty every time anyone ran the
+app locally, so the tracked file is the template and the schema is a build artefact.
+
+Generation runs on `postinstall`, `predev`, `prebuild` and every `db:*` script, so it is never
+something to remember. Supported providers: `sqlite`, `postgresql`, `mysql`, `sqlserver`,
 `cockroachdb`.
 
 In Docker, set `DOCKER_DATABASE_URL` in `.env` instead of `DATABASE_URL` — the compose file maps it
